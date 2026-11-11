@@ -2,10 +2,14 @@
 id: core-concepts
 title: Core Concepts
 description: "Introduction > Core Concepts: A quick overview of Redux's key idea, reducer functions"
-hide_title: true
 ---
 
+<!-- prettier-ignore -->
+import CoreApiNote from "../components/_CoreApiNote.mdx";
+
 # Core Concepts
+
+<CoreApiNote />
 
 Imagine your app’s state is described as a plain object. For example, the state of a todo app might look like this:
 
@@ -33,7 +37,7 @@ To change something in the state, you need to dispatch an action. An action is a
 ```
 
 Enforcing that every change is described as an action lets us have a clear understanding of what’s going on in the app. If something changed, we know why it changed. Actions are like breadcrumbs of what has happened.
-Finally, to tie state and actions together, we write a function called a reducer. Again, nothing magical about it—it’s just a function that takes state and action as arguments, and returns the next state of the app.
+Finally, to tie state and actions together, we write a function called a reducer. Again, nothing magical about it — it’s just a function that takes state and action as arguments, and returns the next state of the app.
 It would be hard to write such a function for a big app, so we write smaller functions managing parts of the state:
 
 ```js
@@ -73,3 +77,5 @@ function todoApp(state = {}, action) {
 ```
 
 This is basically the whole idea of Redux. Note that we haven’t used any Redux APIs. It comes with a few utilities to facilitate this pattern, but the main idea is that you describe how your state is updated over time in response to action objects, and 90% of the code you write is just plain JavaScript, with no use of Redux itself, its APIs, or any magic.
+
+In practice, Redux Toolkit's [`createSlice`](/toolkit/api/createSlice) generates reducers like `todos` and `visibilityFilter` for you, along with the matching action creators, and [`configureStore`](/toolkit/api/configureStore) combines them into `todoApp`. The pattern underneath is exactly what you see above.

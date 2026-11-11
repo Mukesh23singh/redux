@@ -22,7 +22,7 @@ However, time and experience have shown that for some topics, certain approaches
 
 With that in mind, **we've put together this list of recommendations to help you avoid errors, bikeshedding, and anti-patterns**. We also understand that team preferences vary and different projects have different requirements, so no style guide will fit all sizes. **You are encouraged to follow these recommendations, but take the time to evaluate your own situation and decide if they fit your needs**.
 
-Finally, we'd like to thank the Vue documentation authors for writing the [Vue Style Guide page](https://vuejs.org/v2/style-guide/), which was the inspiration for this page.
+Finally, we'd like to thank the Vue documentation authors for writing the [Vue Style Guide page](https://v2.vuejs.org/v2/style-guide/), which was the inspiration for this page.
 
 ## Rule Categories
 
@@ -48,7 +48,7 @@ Where multiple, equally good options exist, an arbitrary choice can be made to e
 
 Mutating state is the most common cause of bugs in Redux applications, including components failing to re-render properly, and will also break time-travel debugging in the Redux DevTools. **Actual mutation of state values should always be avoided**, both inside reducers and in all other application code.
 
-Use tools such as [`redux-immutable-state-invariant`](https://github.com/leoasis/redux-immutable-state-invariant) to catch mutations during development, and [Immer](https://immerjs.github.io/immer/) to avoid accidental mutations in state updates.
+Redux Toolkit's `configureStore` includes [an immutability check middleware](/toolkit/api/immutabilityMiddleware) that catches mutations during development, and `createSlice` uses [Immer](https://immerjs.github.io/immer/) so that state updates can't accidentally mutate the real data.
 
 > **Note**: it is okay to modify _copies_ of existing values - that is a normal part of writing immutable update logic. Also, if you are using the Immer library for immutable updates, writing "mutating" logic is acceptable because the real data isn't being mutated - Immer safely tracks changes and generates immutably-updated values internally.
 
@@ -86,13 +86,13 @@ Ideally, no app logic will import the store directly. It should be passed to a R
 
 ### Use Redux Toolkit for Writing Redux Logic
 
-**[Redux Toolkit](../redux-toolkit/overview.md) is our recommended toolset for using Redux**. It has functions that build in our suggested best practices, including setting up the store to catch mutations and enable the Redux DevTools Extension, simplifying immutable update logic with Immer, and more.
+**[Redux Toolkit](/toolkit/introduction/getting-started) is our recommended toolset for using Redux**. It has functions that build in our suggested best practices, including setting up the store to catch mutations and enable the Redux DevTools Extension, simplifying immutable update logic with Immer, and more.
 
 You are not required to use RTK with Redux, and you are free to use other approaches if desired, but **using RTK will simplify your logic and ensure that your application is set up with good defaults**.
 
 ### Use Immer for Writing Immutable Updates
 
-Writing immutable update logic by hand is frequently difficult and prone to errors. [Immer](https://immerjs.github.io/immer/) allows you to write simpler immutable updates using "mutative" logic, and even freezes your state in development to catch mutations elsewhere in the app. **We recommend using Immer for writing immutable update logic, preferably as part of [Redux Toolkit](../redux-toolkit/overview.md)**.
+Writing immutable update logic by hand is frequently difficult and prone to errors. [Immer](https://immerjs.github.io/immer/) allows you to write simpler immutable updates using "mutative" logic, and even freezes your state in development to catch mutations elsewhere in the app. **We recommend using Immer for writing immutable update logic, preferably as part of [Redux Toolkit](/toolkit/introduction/getting-started)**.
 
 <a id="structure-files-as-feature-folders-or-ducks"></a>
 
@@ -135,45 +135,57 @@ There are valid cases where some or all of the new state should be calculated fi
 
 The Redux core does not actually care whether a new state value is calculated in the reducer or in the action creation logic. For example, for a todo app, the logic for a "toggle todo" action requires immutably updating an array of todos. It is legal to have the action contain just the todo ID and calculate the new array in the reducer:
 
-```js
+```ts
 // Click handler:
-const onTodoClicked = (id) => {
-    dispatch({type: "todos/toggleTodo", payload: {id}})
+const onTodoClicked = (id: string) => {
+  dispatch(todoToggled(id))
 }
 
 // Reducer:
-case "todos/toggleTodo": {
-    return state.map(todo => {
-        if(todo.id !== action.payload.id) return todo;
-
-        return {...todo, completed: !todo.completed };
-    })
-}
+const todosSlice = createSlice({
+  name: 'todos',
+  initialState,
+  reducers: {
+    todoToggled(state, action: PayloadAction<string>) {
+      const todo = state.find(todo => todo.id === action.payload)
+      if (todo) {
+        todo.completed = !todo.completed
+      }
+    }
+  }
+})
 ```
 
 And also to calculate the new array first and put the entire new array in the action:
 
-```js
+```ts
 // Click handler:
-const onTodoClicked = id => {
+const onTodoClicked = (id: string) => {
   const newTodos = todos.map(todo => {
     if (todo.id !== id) return todo
 
     return { ...todo, completed: !todo.completed }
   })
 
-  dispatch({ type: 'todos/toggleTodo', payload: { todos: newTodos } })
+  dispatch(todosReplaced(newTodos))
 }
 
 // Reducer:
-case "todos/toggleTodo":
-    return action.payload.todos;
+const todosSlice = createSlice({
+  name: 'todos',
+  initialState,
+  reducers: {
+    todosReplaced(state, action: PayloadAction<Todo[]>) {
+      return action.payload
+    }
+  }
+})
 ```
 
 However, doing the logic in the reducer is preferable for several reasons:
 
 - Reducers are always easy to test, because they are pure functions - you just call `const result = reducer(testState, action)`, and assert that the result is what you expected. So, the more logic you can put in a reducer, the more logic you have that is easily testable.
-- Redux state updates must always follow [the rules of immutable updates](../recipes/structuring-reducers/ImmutableUpdatePatterns.md). Most Redux users realize they have to follow the rules inside a reducer, but it's not obvious that you _also_ have to do this if the new state is calculated _outside_ the reducer. This can easily lead to mistakes like accidental mutations, or even reading a value from the Redux store and passing it right back inside an action. Doing all of the state calculations in a reducer avoids those mistakes.
+- Redux state updates must always follow [the rules of immutable updates](../usage/structuring-reducers/ImmutableUpdatePatterns.md). Most Redux users realize they have to follow the rules inside a reducer, but it's not obvious that you _also_ have to do this if the new state is calculated _outside_ the reducer. This can easily lead to mistakes like accidental mutations, or even reading a value from the Redux store and passing it right back inside an action. Doing all of the state calculations in a reducer avoids those mistakes.
 - If you are using Redux Toolkit or Immer, it is much easier to write immutable update logic in reducers, and Immer will freeze the state and catch accidental mutations.
 - Time-travel debugging works by letting you "undo" a dispatched action, then either do something different or "redo" the action. In addition, hot-reloading of reducers normally involves re-running the new reducer with the existing actions. If you have a correct action but a buggy reducer, you can edit the reducer to fix the bug, hot-reload it, and you should get the correct state right away. If the action itself was wrong, you'd have to re-run the steps that led to that action being dispatched. So, it's easier to debug if more logic is in the reducer.
 - Finally, putting logic in reducers means you know where to look for the update logic, instead of having it scattered in random other parts of the application code.
@@ -191,21 +203,22 @@ In addition, slice reducers should exercise control over what other values are r
 <DetailedExplanation>
 Picture a "current user" reducer that looks like:
 
-```js
+```ts
 const initialState = {
-    firstName: null,
-    lastName: null,
-    age: null,
-};
-
-export default usersReducer = (state = initialState, action) {
-    switch(action.type) {
-        case "users/userLoggedIn": {
-            return action.payload;
-        }
-        default: return state;
-    }
+  firstName: null,
+  lastName: null,
+  age: null
 }
+
+const usersSlice = createSlice({
+  name: 'users',
+  initialState,
+  reducers: {
+    userLoggedIn(state, action) {
+      return action.payload
+    }
+  }
+})
 ```
 
 In this example, the reducer completely assumes that `action.payload` is going to be a correctly formatted object.
@@ -232,12 +245,12 @@ Use of static typing does make this kind of code safer and somewhat more accepta
 
 ### Name State Slices Based On the Stored Data
 
-As mentioned in [Reducers Should Own the State Shape ](#reducers-should-own-the-state-shape), the standard approach for splitting reducer logic is based on "slices" of state. Correspondingly, `combineReducers` is the standard function for joining those slice reducers into a larger reducer function.
+As mentioned in [Reducers Should Own the State Shape](#reducers-should-own-the-state-shape), the standard approach for splitting reducer logic is based on "slices" of state. Correspondingly, `combineReducers` is the standard function for joining those slice reducers into a larger reducer function.
 
 The key names in the object passed to `combineReducers` will define the names of the keys in the resulting state object. Be sure to name these keys after the data that is kept inside, and avoid use of the word "reducer" in the key names. Your object should look like `{users: {}, posts: {}}`, rather than `{usersReducer: {}, postsReducer: {}}`.
 
 <DetailedExplanation>
-ES6 object literal shorthand makes it easy to define a key name and a value in an object at the same time:
+Object literal shorthand makes it easy to define a key name and a value in an object at the same time:
 
 ```js
 const data = 42
@@ -310,51 +323,53 @@ With TypeScript, this also makes it easy to use [discriminated unions](https://b
 
 Typically, reducer logic is written by taking the action into account first. When modeling logic with state machines, it's important to take the state into account first. Creating "finite state reducers" for each state helps encapsulate behavior per state:
 
-```js
-import {
-  FETCH_USER,
-  // ...
-} from './actions'
+```ts
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-const IDLE_STATUS = 'idle';
-const LOADING_STATUS = 'loading';
-const SUCCESS_STATUS = 'success';
-const FAILURE_STATUS = 'failure';
+type UserState =
+  | { status: 'idle'; user: null; error: null }
+  | { status: 'loading'; user: null; error: null }
+  | { status: 'success'; user: User; error: null }
+  | { status: 'failure'; user: null; error: string }
 
-const fetchIdleUserReducer = (state, action) => {
-  // state.status is "idle"
-  switch (action.type) {
-    case FETCH_USER:
-      return {
-        ...state,
-        status: LOADING_STATUS
+const initialState: UserState = { status: 'idle', user: null, error: null }
+
+const userSlice = createSlice({
+  name: 'user',
+  initialState,
+  reducers: {
+    fetchUserStarted(state) {
+      // Only an idle or failed fetch can start loading
+      switch (state.status) {
+        case 'idle':
+        case 'failure':
+          return { status: 'loading', user: null, error: null }
+        default:
+          return state
+      }
+    },
+    fetchUserSucceeded(state, action: PayloadAction<User>) {
+      // A result only matters if we were actually loading
+      switch (state.status) {
+        case 'loading':
+          return { status: 'success', user: action.payload, error: null }
+        default:
+          return state
+      }
+    },
+    fetchUserFailed(state, action: PayloadAction<string>) {
+      switch (state.status) {
+        case 'loading':
+          return { status: 'failure', user: null, error: action.payload }
+        default:
+          return state
       }
     }
-    default:
-      return state;
   }
-}
-
-// ... other reducers
-
-const fetchUserReducer = (state, action) => {
-  switch (state.status) {
-    case IDLE_STATUS:
-      return fetchIdleUserReducer(state, action);
-    case LOADING_STATUS:
-      return fetchLoadingUserReducer(state, action);
-    case SUCCESS_STATUS:
-      return fetchSuccessUserReducer(state, action);
-    case FAILURE_STATUS:
-      return fetchFailureUserReducer(state, action);
-    default:
-      // this should never be reached
-      return state;
-  }
-}
+})
 ```
 
-Now, since you're defining behavior per state instead of per action, you also prevent impossible transitions. For instance, a `FETCH_USER` action should have no effect when `status === LOADING_STATUS`, and you can enforce that, instead of accidentally introducing edge-cases.
+Now, since you're defining behavior per state instead of per action, you also prevent impossible transitions. For instance, a `fetchUserStarted` action should have no effect when `status === 'loading'`, and you can enforce that, instead of accidentally introducing edge-cases.
 
 </DetailedExplanation>
 
@@ -362,7 +377,19 @@ Now, since you're defining behavior per state instead of per action, you also pr
 
 Many applications need to cache complex data in the store. That data is often received in a nested form from an API, or has relations between different entities in the data (such as a blog that contains Users, Posts, and Comments).
 
-**Prefer storing that data in [a "normalized" form](../recipes/structuring-reducers/NormalizingStateShape.md) in the store**. This makes it easier to look up items based on their ID and update a single item in the store, and ultimately leads to better performance patterns.
+**Prefer storing that data in [a "normalized" form](../usage/structuring-reducers/NormalizingStateShape.md) in the store**. This makes it easier to look up items based on their ID and update a single item in the store, and ultimately leads to better performance patterns.
+
+### Keep State Minimal and Derive Additional Values
+
+Whenever possible, **keep the actual data in the Redux store as minimal as possible, and _derive_ additional values from that state as needed**. This includes things like calculating filtered lists or summing up values. As an example, a todo app would keep an original list of todo objects in state, but derive a filtered list of todos outside the state whenever the state is updated. Similarly, a check for whether all todos have been completed, or number of todos remaining, can be calculated outside the store as well.
+
+This has several benefits:
+
+- The actual state is easier to read
+- Less logic is needed to calculate those additional values and keep them in sync with the rest of the data
+- The original state is still there as a reference and isn't being replaced
+
+Deriving data is often done in "selector" functions, which can encapsulate the logic for doing the derived data calculations. In order to improve performance, these selectors can be _memoized_ to cache previous results, using [Reselect](https://reselect.js.org) (re-exported from Redux Toolkit as `createSelector`).
 
 ### Model Actions as Events, Not Setters
 
@@ -431,7 +458,7 @@ While UI updates queued from React event handlers will usually be batched into a
 
 In addition, multiple dispatches that are conceptually part of a larger "transaction"-style update sequence will result in intermediate states that might not be considered valid. For example, if actions `"UPDATE_A"`, `"UPDATE_B"`, and `"UPDATE_C"` are dispatched in a row, and some code is expecting all three of `a`, `b`, and `c` to be updated together, the state after the first two dispatches will effectively be incomplete because only one or two of them has been updated.
 
-If multiple dispatches are truly necessary, consider batching the updates in some way. Depending on your use case, this may just be batching React's own renders (possibly using [`batch()` from React-Redux](https://react-redux.js.org/api/batch)), debouncing the store notification callbacks, or grouping many actions into a larger single dispatch that only results in one subscriber notification. See [the FAQ entry on "reducing store update events"](../faq/Performance.md#how-can-i-reduce-the-number-of-store-update-events) for additional examples and links to related addons.
+If multiple dispatches are truly necessary, consider batching the updates in some way. React 18 and later already batch renders for multiple dispatches in the same tick, so the remaining options are debouncing the store notification callbacks, or grouping many actions into a larger single dispatch that only results in one subscriber notification. See [the FAQ entry on "reducing store update events"](../faq/Performance.md#how-can-i-reduce-the-number-of-store-update-events) for additional examples and links to related addons.
 
 </DetailedExplanation>
 
@@ -439,17 +466,17 @@ If multiple dispatches are truly necessary, consider batching the updates in som
 
 The ["Three Principles of Redux"](../understanding/thinking-in-redux/ThreePrinciples.md) says that "the state of your whole application is stored in a single tree". This phrasing has been over-interpreted. It does not mean that literally _every_ value in the entire app _must_ be kept in the Redux store. Instead, **there should be a single place to find all values that _you_ consider to be global and app-wide**. Values that are "local" should generally be kept in the nearest UI component instead.
 
-Because of this, it is up to you as a developer to decide what state should actually live in the Redux store, and what should stay in component state. **[Use these rules of thumb to help evaluate each piece of state and decide where it should live](../faq/OrganizingState.md#do-i-have-to-put-all-my-state-into-redux-should-i-ever-use-reacts-setstate)**.
+Because of this, it is up to you as a developer to decide what state should actually live in the Redux store, and what should stay in component state. **[Use these rules of thumb to help evaluate each piece of state and decide where it should live](../faq/OrganizingState.md#do-i-have-to-put-all-my-state-into-redux-should-i-ever-use-reacts-usestate-or-usereducer)**.
 
 ### Use the React-Redux Hooks API
 
-**Prefer using [the React-Redux hooks API (`useSelector` and `useDispatch`)](https://react-redux.js.org/api/hooks) as the default way to interact with a Redux store from your React components**. While the classic `connect` API still works fine and will continue to be supported, the hooks API is generally easier to use in several ways. The hooks have less indirection, less code to write, and are simpler to use with TypeScript than `connect` is.
+**Prefer using [the React-Redux hooks API (`useSelector` and `useDispatch`)](/react-redux/api/hooks) as the default way to interact with a Redux store from your React components**. While the classic `connect` API still works fine and will continue to be supported, the hooks API is generally easier to use in several ways. The hooks have less indirection, less code to write, and are simpler to use with TypeScript than `connect` is.
 
 The hooks API does introduce some different tradeoffs than `connect` does in terms of performance and data flow, but we now recommend them as the default.
 
 <DetailedExplanation>
 
-The [classic `connect` API](https://react-redux.js.org/api/connect) is a [Higher Order Component](https://reactjs.org/docs/higher-order-components.html). It generates a new wrapper component that subscribes to the store, renders your own component, and passes down data from the store and action creators as props.
+The [classic `connect` API](/react-redux/api/connect) is a [Higher Order Component](https://legacy.reactjs.org/docs/higher-order-components.html). It generates a new wrapper component that subscribes to the store, renders your own component, and passes down data from the store and action creators as props.
 
 This is a deliberate level of indirection, and allows you to write "presentational"-style components that receive all their values as props, without being specifically dependent on Redux.
 
@@ -464,7 +491,7 @@ For more details, see Redux maintainer Mark Erikson's post and conference talk o
 - [Thoughts on React Hooks, Redux, and Separation of Concerns](https://blog.isquaredsoftware.com/2019/07/blogged-answers-thoughts-on-hooks/)
 - [ReactBoston 2019: Hooks, HOCs, and Tradeoffs](https://blog.isquaredsoftware.com/2019/09/presentation-hooks-hocs-tradeoffs/)
 
-Also see the [React-Redux hooks API docs](https://react-redux.js.org/api/hooks) for info on how to correctly optimize components and handle rare edge cases.
+Also see the [React-Redux hooks API docs](/react-redux/api/hooks) for info on how to correctly optimize components and handle rare edge cases.
 
 </DetailedExplanation>
 
@@ -472,13 +499,15 @@ Also see the [React-Redux hooks API docs](https://react-redux.js.org/api/hooks) 
 
 Prefer having more UI components subscribed to the Redux store and reading data at a more granular level. This typically leads to better UI performance, as fewer components will need to render when a given piece of state changes.
 
-For example, rather than just connecting a `<UserList>` component and reading the entire array of users, have `<UserList>` retrieve a list of all user IDs, render list items as `<UserListItem userId={userId}>`, and have `<UserListItem>` be connected and extract its own user entry from the store.
+For example, rather than having a `<UserList>` component read the entire array of users, have `<UserList>` select a list of all user IDs, render list items as `<UserListItem userId={userId}>`, and have `<UserListItem>` call `useSelector` to extract its own user entry from the store.
 
-This applies for both the React-Redux `connect()` API and the `useSelector()` hook.
+This applies for both the `useSelector()` hook and the legacy `connect()` API.
 
 ### Use the Object Shorthand Form of `mapDispatch` with `connect`
 
-The `mapDispatch` argument to `connect` can be defined as either a function that receives `dispatch` as an argument, or an object containing action creators. **We recommend always using [the "object shorthand" form of `mapDispatch`](https://react-redux.js.org/using-react-redux/connect-mapdispatch#defining-mapdispatchtoprops-as-an-object)**, as it simplifies the code considerably. There is almost never a real need to write `mapDispatch` as a function.
+This rule only applies if you are still using the legacy `connect` API. Components written with hooks call `useDispatch` directly.
+
+The `mapDispatch` argument to `connect` can be defined as either a function that receives `dispatch` as an argument, or an object containing action creators. **We recommend always using [the "object shorthand" form of `mapDispatch`](/react-redux/using-react-redux/connect-mapdispatch#defining-mapdispatchtoprops-as-an-object)**, as it simplifies the code considerably. There is almost never a real need to write `mapDispatch` as a function.
 
 ### Call `useSelector` Multiple Times in Function Components
 
@@ -488,17 +517,17 @@ However, try to find an appropriate balance of granularity. If a single componen
 
 ### Use Static Typing
 
-**Use a static type system like TypeScript or Flow rather than plain JavaScript**. The type systems will catch many common mistakes, improve the documentation of your code, and ultimately lead to better long-term maintainability. While Redux and React-Redux were originally designed with plain JS in mind, both work well with TS and Flow. Redux Toolkit is specifically written in TS and is designed to provide good type safety with a minimal amount of additional type declarations.
+**Use a static type system like TypeScript rather than plain JavaScript**. The type system will catch many common mistakes, improve the documentation of your code, and ultimately lead to better long-term maintainability. While Redux and React-Redux were originally designed with plain JS in mind, both work well with TS. Redux Toolkit is specifically written in TS and is designed to provide good type safety with a minimal amount of additional type declarations.
 
 ### Use the Redux DevTools Extension for Debugging
 
-**Configure your Redux store to enable [debugging with the Redux DevTools Extension](https://github.com/zalmoxisus/redux-devtools-extension)**. It allows you to view:
+**Configure your Redux store to enable [debugging with the Redux DevTools Extension](https://github.com/reduxjs/redux-devtools/tree/main/extension)**. It allows you to view:
 
 - The history log of dispatched actions
 - The contents of each action
 - The final state after an action was dispatched
 - The diff in the state after an action
-- The [function stack trace showing the code where the action was actually dispatched](https://github.com/zalmoxisus/redux-devtools-extension/blob/master/docs/Features/Trace.md)
+- The [function stack trace showing the code where the action was actually dispatched](https://github.com/reduxjs/redux-devtools/blob/main/extension/docs/Features/Trace.md)
 
 In addition, the DevTools allows you to do "time-travel debugging", stepping back and forth in the action history to see the entire app state and UI at different points in time.
 
@@ -571,15 +600,23 @@ However, using action creators provides consistency, especially in cases where s
 
 **Prefer using action creators for dispatching any actions**. However, rather than writing action creators by hand, **we recommend using the `createSlice` function from Redux Toolkit, which will generate action creators and action types automatically**.
 
-### Use Thunks for Async Logic
+### Use RTK Query for Data Fetching
+
+In practice, **the single most common use case for side effects in a typical Redux app is fetching and caching data from the server**.
+
+Because of this, **we recommend using [RTK Query](../tutorials/essentials/part-7-rtk-query-basics.md) as the default approach for data fetching and caching in a Redux app**. RTK Query has been designed to correctly manage the logic for fetching data from the server as needed, caching it, deduplicating requests, updating components, and much more. We recommend _against_ writing data fetching logic by hand in almost all cases.
+
+### Use Thunks and Listeners for Other Async Logic
 
 Redux was designed to be extensible, and the middleware API was specifically created to allow different forms of async logic to be plugged into the Redux store. That way, users wouldn't be forced to learn a specific library like RxJS if it wasn't appropriate for their needs.
 
 This led to a wide variety of Redux async middleware addons being created, and that in turn has caused confusion and questions over which async middleware should be used.
 
-**We recommend [using the Redux Thunk middleware by default](https://github.com/reduxjs/redux-thunk)**, as it is sufficient for most typical use cases (such as basic AJAX data fetching). In addition, use of the `async/await` syntax in thunks makes them easier to read.
+**We recommend using [the Redux thunk middleware](../usage/writing-logic-thunks.mdx) for imperative logic**, such as complex sync logic that needs access to `dispatch` or `getState`, and moderately complex async logic. This includes use cases like moving logic out of components.
 
-If you have truly complex async workflows that involve things like cancelation, debouncing, running logic after a given action was dispatched, or "background-thread"-type behavior, then consider adding more powerful async middleware like Redux-Saga or Redux-Observable.
+**We recommend using [the RTK "listener" middleware"](/toolkit/api/createListenerMiddleware) for "reactive" logic that needs to respond to dispatched actions or state changes**, such as longer-running async workflows and "background thread"-type behavior.
+
+We recommend _against_ using the more complex Redux-Saga and Redux-Observable libraries in most cases, especially for async data fetching. Only use these libraries if no other tool is powerful enough to handle your use case.
 
 ### Move Complex Logic Outside Components
 

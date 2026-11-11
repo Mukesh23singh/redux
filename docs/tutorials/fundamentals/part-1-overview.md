@@ -2,13 +2,13 @@
 id: part-1-overview
 title: 'Redux Fundamentals, Part 1: Redux Overview'
 sidebar_label: 'Redux Overview'
-hide_title: true
 description: 'The official Fundamentals tutorial for Redux: learn the fundamentals of using Redux'
 ---
 
 import { DetailedExplanation } from '../../components/DetailedExplanation'
 
-# Redux Fundamentals, Part 1: Redux Overview
+<!-- prettier-ignore -->
+import FundamentalsWarning from "../../components/_FundamentalsWarning.mdx";
 
 :::tip What You'll Learn
 
@@ -27,28 +27,21 @@ Starting in [Part 3: State, Actions, and Reducers](./part-3-state-actions-reduce
 
 ### How to Read This Tutorial
 
-**This tutorial will teach you "how Redux works"**, as well as _why_ these patterns exist. Fair warning though - learning the concepts is different from putting them into practice in actual apps.
+**This tutorial will teach you "how Redux works"**, as well as _why_ these patterns exist.
 
-**The initial code will be less concise than the way we suggest writing real app code**, but writing it out long-hand is the best way to learn. Once you understand how everything fits together, we'll look at using Redux Toolkit to simplify things. **Redux Toolkit is the recommended way to build production apps with Redux**, and is built on all of the concepts that we will look at throughout this tutorial. Once you understand the core concepts covered here, you'll understand how to use Redux Toolkit more efficiently.
+<FundamentalsWarning />
 
-:::info
-
-If you're looking to learn more about how Redux is used to write real-world applications, please see:
-
-- [**The "Modern Redux" page in this tutorial**](./part-8-modern-redux.md), which shows how to convert the low-level examples from earlier sections into the modern patterns we do recommend for real-world usage
-- [**The "Redux Essentials" tutorial**](../essentials/part-1-overview-concepts.md), which teaches "how to use Redux, the right way" for real-world apps, using our latest recommended patterns and practices.
-
-:::
+Once you understand how everything fits together, we'll look at using Redux Toolkit to simplify things. **Redux Toolkit is the recommended way to build production apps with Redux**, and is built on all of the concepts that we will look at throughout this tutorial. Once you understand the core concepts covered here, you'll understand how to use Redux Toolkit more efficiently.
 
 We've tried to keep these explanations beginner-friendly, but we do need to make some assumptions about what you know already so that we can focus on explaining Redux itself. **This tutorial assumes that you know**:
 
 :::important Prerequisites
 
-- Familiarity with [HTML & CSS](https://internetingishard.com/).
-- Familiarity with [ES6 syntax and features](https://www.taniarascia.com/es6-syntax-and-feature-overview/)
+- Familiarity with [HTML & CSS](https://internetingishard.netlify.app/html-and-css/index.html).
+- Familiarity with [ES2015 syntax and features](https://www.taniarascia.com/es6-syntax-and-feature-overview/)
 - Understanding of [the array and object spread operators](https://javascript.info/rest-parameters-spread#spread-syntax)
-- Knowledge of React terminology: [JSX](https://reactjs.org/docs/introducing-jsx.html), [State](https://reactjs.org/docs/state-and-lifecycle.html), [Function Components, Props](https://reactjs.org/docs/components-and-props.html), and [Hooks](https://reactjs.org/docs/hooks-intro.html)
-- Knowledge of [asynchronous JavaScript](https://javascript.info/promise-basics) and [making AJAX requests](https://javascript.info/fetch)
+- Knowledge of React terminology: [JSX](https://react.dev/learn/writing-markup-with-jsx), [Function Components](https://react.dev/learn/your-first-component), [Props](https://react.dev/learn/passing-props-to-a-component), [State](https://react.dev/learn/state-a-components-memory), and [Hooks](https://react.dev/reference/react)
+- Knowledge of [asynchronous JavaScript](https://javascript.info/promise-basics) and [making HTTP requests](https://javascript.info/fetch)
 
 :::
 
@@ -67,7 +60,7 @@ Finally, you should make sure that you have the React and Redux DevTools extensi
 
 It helps to understand what this "Redux" thing is in the first place. What does it do? What problems does it help me solve? Why would I want to use it?
 
-**Redux is a pattern and library for managing and updating application state, using events called "actions".** It serves as a centralized store for state that needs to be used across your entire application, with rules ensuring that the state can only be updated in a predictable fashion.
+**Redux is a pattern and library for managing and updating global application state, where the UI triggers events called "actions" to describe what happened, and separate update logic called "reducers" updates the state in response.** It serves as a centralized store for state that needs to be used across your entire application, with rules ensuring that the state can only be updated in a predictable fashion.
 
 ### Why Should I Use Redux?
 
@@ -77,7 +70,7 @@ Redux helps you manage "global" state - state that is needed across many parts o
 
 ### When Should I Use Redux?
 
-Redux helps you deal with shared state management, but like any tool, it has tradeoffs. There's more concepts to learn, and more code to write. It also adds some indirection to your code, and asks you to follow certain restrictions. It's a trade-off between short term and long term productivity.
+Redux helps you deal with shared state management, but like any tool, it has tradeoffs. There are more concepts to learn, and more code to write. It also adds some indirection to your code, and asks you to follow certain restrictions. It's a trade-off between short term and long term productivity.
 
 Redux is more useful when:
 
@@ -103,17 +96,17 @@ If you're not sure whether Redux is a good choice for your app, these resources 
 
 Redux is a small standalone JS library. However, it is commonly used with several other packages:
 
-#### React-Redux
-
-Redux can integrate with any UI framework, and is most frequently used with React. [**React-Redux**](https://react-redux.js.org/) is our official package that lets your React components interact with a Redux store by reading pieces of state and dispatching actions to update the store.
-
 #### Redux Toolkit
 
-[**Redux Toolkit**](https://redux-toolkit.js.org) is our recommended approach for writing Redux logic. It contains packages and functions that we think are essential for building a Redux app. Redux Toolkit builds in our suggested best practices, simplifies most Redux tasks, prevents common mistakes, and makes it easier to write Redux applications.
+[**Redux Toolkit**](/toolkit) is our recommended approach for writing Redux logic. It contains packages and functions that we think are essential for building a Redux app. Redux Toolkit builds in our suggested best practices, simplifies most Redux tasks, prevents common mistakes, and makes it easier to write Redux applications.
+
+#### React-Redux
+
+Redux can integrate with any UI framework, and is most frequently used with React. [**React-Redux**](/react-redux) is our official package that lets your React components interact with a Redux store by reading pieces of state and dispatching actions to update the store.
 
 #### Redux DevTools Extension
 
-The [**Redux DevTools Extension**](https://github.com/zalmoxisus/redux-devtools-extension) shows a history of the changes to the state in your Redux store over time. This allows you to debug your applications effectively, including using powerful techniques like "time-travel debugging".
+The [**Redux DevTools Extension**](https://github.com/reduxjs/redux-devtools/tree/main/extension) shows a history of the changes to the state in your Redux store over time. This allows you to debug your applications effectively, including using powerful techniques like "time-travel debugging".
 
 ## Redux Basics
 
@@ -142,7 +135,7 @@ Let's look at a minimal working example of a Redux app - a small counter applica
 
 <iframe
   class="codesandbox"
-  src="https://codesandbox.io/embed/dank-architecture-lr7k1?fontsize=14&hidenavigation=1&theme=dark&runonclick=1"
+  src="https://codesandbox.io/embed/dank-architecture-lr7k1?codemirror=1&fontsize=14&hidenavigation=1&theme=dark&runonclick=1"
   title="redux-fundamentals-core-example"
   allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
   sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
@@ -323,11 +316,18 @@ With that in mind, let's review what we've learned so far:
 
 - **Redux is a library for managing global application state**
   - Redux is typically used with the React-Redux library for integrating Redux and React together
-  - Redux Toolkit is the recommended way to write Redux logic
-- **Redux uses several types of code**
+  - Redux Toolkit is the standard way to write Redux logic
+- **Redux's update pattern separates "what happened" from "how the state changes"**
   - _Actions_ are plain objects with a `type` field, and describe "what happened" in the app
   - _Reducers_ are functions that calculate a new state value based on previous state + an action
   - A Redux _store_ runs the root reducer whenever an action is _dispatched_
+- **Redux uses a "one-way data flow" app structure**
+  - State describes the condition of the app at a point in time, and UI renders based on that state
+  - When something happens in the app:
+    - The UI dispatches an action
+    - The store runs the reducers, and the state is updated based on what occurred
+    - The store notifies the UI that the state has changed
+  - The UI re-renders based on the new state
 
 :::
 

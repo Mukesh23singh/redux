@@ -40,12 +40,18 @@ git clone https://github.com/your-username/redux.git
 
 ### Building
 
-#### Building Redux
-
-Running the `build` task will create a CommonJS module-per-module build, a ES Modules build and a UMD build.
+This repo uses pnpm for all package management. The required version is pinned in the `packageManager` field of `package.json`, so the simplest way to get it is to enable Corepack (`corepack enable`) and let it pick the right one. Install dependencies with:
 
 ```sh
-npm run build
+pnpm install
+```
+
+#### Building Redux
+
+Running the `build` task will build the artifacts into the `./dist` folder
+
+```sh
+pnpm build
 ```
 
 ### Testing and Linting
@@ -53,19 +59,19 @@ npm run build
 To only run linting:
 
 ```sh
-npm run lint
+pnpm lint
 ```
 
 To only run tests:
 
 ```sh
-npm run test
+pnpm test
 ```
 
 To continuously watch and run tests, run the following:
 
 ```sh
-npm run test:watch
+pnpm test:watch
 ```
 
 ### Docs
@@ -78,15 +84,7 @@ Redux comes with [official examples](https://redux.js.org/introduction/examples)
 
 When adding a new example, please adhere to the style and format of the existing examples, and try to reuse as much code as possible. For example, `index.html`, `server.js`, and `webpack.config.js` can typically be reused.
 
-#### Testing the Examples
-
-To test the official Redux examples, run the following:
-
-```sh
-npm run examples:test
-```
-
-Not all examples have tests. If you see an example project without tests, you are very welcome to add them in a way consistent with the examples that have tests.
+Each example is a standalone project with its own `package.json`. Not all examples have tests. If you see an example project without tests, you are very welcome to add them in a way consistent with the examples that have tests.
 
 Please visit the [Examples page](https://redux.js.org/introduction/examples) for information on running individual examples.
 

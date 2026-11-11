@@ -2,29 +2,38 @@
 id: bindactioncreators
 title: bindActionCreators
 hide_title: true
+description: 'API > bindActionCreators: wrapping action creators for dispatching'
 ---
+
+&nbsp;
 
 # `bindActionCreators(actionCreators, dispatch)`
 
+## Overview
+
 Turns an object whose values are [action creators](../understanding/thinking-in-redux/Glossary.md#action-creator), into an object with the same keys, but with every action creator wrapped into a [`dispatch`](Store.md#dispatchaction) call so they may be invoked directly.
 
-Normally you should just call [`dispatch`](Store.md#dispatchaction) directly on your [`Store`](Store.md) instance. If you use Redux with React, [react-redux](https://github.com/gaearon/react-redux) will provide you with the [`dispatch`](Store.md#dispatchaction) function so you can call it directly, too.
+:::info
 
-The only use case for `bindActionCreators` is when you want to pass some action creators down to a component that isn't aware of Redux, and you don't want to pass [`dispatch`](Store.md#dispatchaction) or the Redux store to it.
+Normally you should just call [`dispatch`](Store.md#dispatchaction) directly. If you use Redux with React, [React-Redux's `useDispatch` hook](/react-redux/api/hooks#usedispatch) gives you the `dispatch` function inside components.
+
+The only use case for `bindActionCreators` is when you want to pass some action creators down to a component that isn't aware of Redux, and you don't want to pass `dispatch` or the Redux store to it. It was originally intended for use with the legacy React-Redux `connect` method, and is rarely needed today.
+
+:::
 
 For convenience, you can also pass an action creator as the first argument, and get a dispatch wrapped function in return.
 
-#### Parameters
+## Parameters
 
 1. `actionCreators` (_Function_ or _Object_): An [action creator](../understanding/thinking-in-redux/Glossary.md#action-creator), or an object whose values are action creators.
 
 2. `dispatch` (_Function_): A [`dispatch`](Store.md#dispatchaction) function available on the [`Store`](Store.md) instance.
 
-#### Returns
+### Returns
 
 (_Function_ or _Object_): An object mimicking the original object, but with each function immediately dispatching the action returned by the corresponding action creator. If you passed a function as `actionCreators`, the return value will also be a single function.
 
-#### Example
+## Example
 
 #### `TodoActionCreators.js`
 
@@ -47,9 +56,9 @@ export function removeTodo(id) {
 #### `SomeComponent.js`
 
 ```js
-import { Component } from 'react'
+import { useEffect, useMemo } from 'react'
 import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import * as TodoActionCreators from './TodoActionCreators'
 console.log(TodoActionCreators)
@@ -58,29 +67,26 @@ console.log(TodoActionCreators)
 //   removeTodo: Function
 // }
 
-class TodoListContainer extends Component {
-  constructor(props) {
-    super(props)
+export function TodoListContainer() {
+  const dispatch = useDispatch()
+  const todos = useSelector(state => state.todos)
 
-    const { dispatch } = props
+  // Here's a good use case for bindActionCreators:
+  // You want a child component to be completely unaware of Redux.
+  // We create bound versions of these functions now so we can
+  // pass them down to our child later.
 
-    // Here's a good use case for bindActionCreators:
-    // You want a child component to be completely unaware of Redux.
-    // We create bound versions of these functions now so we can
-    // pass them down to our child later.
+  const boundActionCreators = useMemo(
+    () => bindActionCreators(TodoActionCreators, dispatch),
+    [dispatch]
+  )
+  console.log(boundActionCreators)
+  // {
+  //   addTodo: Function,
+  //   removeTodo: Function
+  // }
 
-    this.boundActionCreators = bindActionCreators(TodoActionCreators, dispatch)
-    console.log(this.boundActionCreators)
-    // {
-    //   addTodo: Function,
-    //   removeTodo: Function
-    // }
-  }
-
-  componentDidMount() {
-    // Injected by react-redux:
-    let { dispatch } = this.props
-
+  useEffect(() => {
     // Note: this won't work:
     // TodoActionCreators.addTodo('Use Redux')
 
@@ -90,27 +96,14 @@ class TodoListContainer extends Component {
     // This will work:
     let action = TodoActionCreators.addTodo('Use Redux')
     dispatch(action)
-  }
+  }, [dispatch])
 
-  render() {
-    // Injected by react-redux:
-    let { todos } = this.props
+  return <TodoList todos={todos} {...boundActionCreators} />
 
-    return <TodoList todos={todos} {...this.boundActionCreators} />
+  // An alternative to bindActionCreators is to pass
+  // just the dispatch function down, but then your child component
+  // needs to import action creators and know about them.
 
-    // An alternative to bindActionCreators is to pass
-    // just the dispatch function down, but then your child component
-    // needs to import action creators and know about them.
-
-    // return <TodoList todos={todos} dispatch={dispatch} />
-  }
+  // return <TodoList todos={todos} dispatch={dispatch} />
 }
-
-export default connect(state => ({ todos: state.todos }))(TodoListContainer)
 ```
-
-#### Tips
-
-- You might ask: why don't we bind the action creators to the store instance right away, like in classical Flux? The problem is that this won't work well with universal apps that need to render on the server. Most likely you want to have a separate store instance per request so you can prepare them with different data, but binding action creators during their definition means you're stuck with a single store instance for all requests.
-
-- If you use ES5, instead of `import * as` syntax you can just pass `require('./TodoActionCreators')` to `bindActionCreators` as the first argument. The only thing it cares about is that the values of the `actionCreators` properties are functions. The module system doesn't matter.

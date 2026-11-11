@@ -1,7 +1,8 @@
 ---
 id: faq
 title: FAQ Index
-hide_title: true
+sidebar_label: FAQ Index
+description: 'FAQ Index: Frequently Asked Questions about Redux'
 ---
 
 # Redux FAQ
@@ -17,7 +18,7 @@ hide_title: true
   - [How do I share state between two reducers? Do I have to use combineReducers?](faq/Reducers.md#how-do-i-share-state-between-two-reducers-do-i-have-to-use-combinereducers)
   - [Do I have to use the switch statement to handle actions?](faq/Reducers.md#do-i-have-to-use-the-switch-statement-to-handle-actions)
 - **Organizing State**
-  - [Do I have to put all my state into Redux? Should I ever use React's setState()?](faq/OrganizingState.md#do-i-have-to-put-all-my-state-into-redux-should-i-ever-use-reacts-setstate)
+  - [Do I have to put all my state into Redux? Should I ever use React's `useState` or `useReducer`?](faq/OrganizingState.md#do-i-have-to-put-all-my-state-into-redux-should-i-ever-use-reacts-usestate-or-usereducer)
   - [Can I put functions, promises, or other non-serializable items in my store state?](faq/OrganizingState.md#can-i-put-functions-promises-or-other-non-serializable-items-in-my-store-state)
   - [How do I organize nested or duplicate data in my state?](faq/OrganizingState.md#how-do-i-organize-nested-or-duplicate-data-in-my-state)
   - [Should I put form state or other UI state in my store?](faq/OrganizingState.md#should-i-put-form-state-or-other-ui-state-in-my-store)
@@ -26,7 +27,7 @@ hide_title: true
   - [Is it OK to have more than one middleware chain in my store enhancer? What is the difference between next and dispatch in a middleware function?](faq/StoreSetup.md#is-it-ok-to-have-more-than-one-middleware-chain-in-my-store-enhancer-what-is-the-difference-between-next-and-dispatch-in-a-middleware-function)
   - [How do I subscribe to only a portion of the state? Can I get the dispatched action as part of the subscription?](faq/StoreSetup.md#how-do-i-subscribe-to-only-a-portion-of-the-state-can-i-get-the-dispatched-action-as-part-of-the-subscription)
 - **Actions**
-  - [Why should type be a string, or at least serializable? Why should my action types be constants?](faq/Actions.md#why-should-type-be-a-string-or-at-least-serializable-why-should-my-action-types-be-constants)
+  - [Why should type be a string, or at least serializable? Why should my action types be constants?](faq/Actions.md#why-should-type-be-a-string-why-should-my-action-types-be-constants)
   - [Is there always a one-to-one mapping between reducers and actions?](faq/Actions.md#is-there-always-a-one-to-one-mapping-between-reducers-and-actions)
   - [How can I represent “side effects” such as AJAX calls? Why do we need things like “action creators”, “thunks”, and “middleware” to do async behavior?](faq/Actions.md#how-can-i-represent-side-effects-such-as-ajax-calls-why-do-we-need-things-like-action-creators-thunks-and-middleware-to-do-async-behavior)
   - [What async middleware should I use? How do you decide between thunks, sagas, observables, or something else?](faq/Actions.md#what-async-middleware-should-i-use-how-do-you-decide-between-thunks-sagas-observables-or-something-else)
@@ -35,7 +36,7 @@ hide_title: true
   - [What are the benefits of immutability?](faq/ImmutableData.md#what-are-the-benefits-of-immutability)
   - [Why is immutability required by Redux?](faq/ImmutableData.md#why-is-immutability-required-by-redux)
   - [What approaches are there for handling data immutability? Do I have to use Immer?](faq/ImmutableData.md#what-approaches-are-there-for-handling-data-immutability-do-i-have-to-use-immer)
-  - [What are the issues with using JavaScript for immutable operations?](faq/ImmutableData.md#what-are-the-issues-with-using-plain-javascript-for-immutable-operations)
+  - [What are the issues with writing immutable updates by hand?](faq/ImmutableData.md#what-are-the-issues-with-writing-immutable-updates-by-hand)
 - **Code Structure**
   - [What should my file structure look like? How should I group my action creators and reducers in my project? Where should my selectors go?](faq/CodeStructure.md#what-should-my-file-structure-look-like-how-should-i-group-my-action-creators-and-reducers-in-my-project-where-should-my-selectors-go)
   - [How should I split my logic between reducers and action creators? Where should my “business logic” go?](faq/CodeStructure.md#how-should-i-split-my-logic-between-reducers-and-action-creators-where-should-my-business-logic-go)
@@ -58,11 +59,14 @@ hide_title: true
   - [Why doesn't mapDispatchToProps allow use of return values from `getState()` or `mapStateToProps()`?](faq/DesignDecisions.md#why-doesnt-mapdispatchtoprops-allow-use-of-return-values-from-getstate-or-mapstatetoprops)
 - **React Redux**
   - [Why should I use React-Redux?](faq/ReactRedux.md#why-should-i-use-react-redux)
-  - [Why isn't my component re-rendering, or my mapStateToProps running?](faq/ReactRedux.md#why-isnt-my-component-re-rendering-or-my-mapstatetoprops-running)
+  - [Why isn't my component re-rendering?](faq/ReactRedux.md#why-isnt-my-component-re-rendering)
   - [Why is my component re-rendering too often?](faq/ReactRedux.md#why-is-my-component-re-rendering-too-often)
-  - [How can I speed up my mapStateToProps?](faq/ReactRedux.md#how-can-i-speed-up-my-mapstatetoprops)
-  - [Why don't I have this.props.dispatch available in my connected component?](faq/ReactRedux.md#why-dont-i-have-this-props-dispatch-available-in-my-connected-component)
-  - [Should I only connect my top component, or can I connect multiple components in my tree?](faq/ReactRedux.md#should-i-only-connect-my-top-component-or-can-i-connect-multiple-components-in-my-tree)
+  - [How do I select multiple values from the store?](faq/ReactRedux.md#how-do-i-select-multiple-values-from-the-store)
+  - [How do I use Redux with React 18 and React 19?](faq/ReactRedux.md#how-do-i-use-redux-with-react-18-and-react-19)
+  - [How do I access the store outside a component?](faq/ReactRedux.md#how-do-i-access-the-store-outside-a-component)
+  - [How do I type `useSelector` and `useDispatch`?](faq/ReactRedux.md#how-do-i-type-useselector-and-usedispatch)
+  - [Is `connect` still supported?](faq/ReactRedux.md#is-connect-still-supported)
+  - [How does Redux compare to the React Context API?](faq/ReactRedux.md#how-does-redux-compare-to-the-react-context-api)
 - **Miscellaneous**
   - [Are there any larger, “real” Redux projects?](faq/Miscellaneous.md#are-there-any-larger-real-redux-projects)
   - [How can I implement authentication in Redux?](faq/Miscellaneous.md#how-can-i-implement-authentication-in-redux)

@@ -1,27 +1,22 @@
 ---
 id: store
 title: Store
-hide_title: true
+description: 'API > Store: the core Redux store methods'
 ---
+
+<!-- prettier-ignore -->
+import CoreApiNote from "../components/_CoreApiNote.mdx";
 
 # Store
 
 A store holds the whole [state tree](../understanding/thinking-in-redux/Glossary.md#state) of your application.
-The only way to change the state inside it is to dispatch an [action](../understanding/thinking-in-redux/Glossary.md#action) on it.
+The only way to change the state inside it is to dispatch an [action](../understanding/thinking-in-redux/Glossary.md#action) on it, which triggers the [root reducer function](../understanding/thinking-in-redux/Glossary.md#reducer) to calculate the new state.
 
 A store is not a class. It's just an object with a few methods on it.
-To create it, pass your root [reducing function](../understanding/thinking-in-redux/Glossary.md#reducer) to [`createStore`](createStore.md).
 
-> ##### A Note for Flux Users
->
-> If you're coming from Flux, there is a single important difference you need to understand. Redux doesn't have a Dispatcher or support many stores. **Instead, there is just a single store with a single root [reducing function](../understanding/thinking-in-redux/Glossary.md#reducer).** As your app grows, instead of adding stores, you split the root reducer into smaller reducers independently operating on the different parts of the state tree. You can use a helper like [`combineReducers`](combineReducers.md) to combine them. This is similar to how there is just one root component in a React app, but it is composed out of many small components.
+<CoreApiNote />
 
-### Store Methods
-
-- [`getState()`](#getstate)
-- [`dispatch(action)`](#dispatchaction)
-- [`subscribe(listener)`](#subscribelistener)
-- [`replaceReducer(nextReducer)`](#replacereducernextreducer)
+To create a store, pass your root [reducer function](../understanding/thinking-in-redux/Glossary.md#reducer) to `configureStore` (or to the deprecated core [`createStore`](createStore.md)).
 
 ## Store Methods
 
@@ -36,17 +31,21 @@ _(any)_: The current state tree of your application.
 
 ---
 
+&nbsp;
+
 ### dispatch(action)
 
 Dispatches an action. This is the only way to trigger a state change.
 
-The store's reducing function will be called with the current [`getState()`](#getState) result and the given `action` synchronously. Its return value will be considered the next state. It will be returned from [`getState()`](#getState) from now on, and the change listeners will immediately be notified.
+The store's reducer function will be called with the current [`getState()`](#getstate) result and the given `action` synchronously. Its return value will be considered the next state. It will be returned from [`getState()`](#getstate) from now on, and the change listeners will immediately be notified.
 
-> ##### A Note for Flux Users
->
-> If you attempt to call `dispatch` from inside the [reducer](../understanding/thinking-in-redux/Glossary.md#reducer), it will throw with an error saying “Reducers may not dispatch actions.” This is similar to “Cannot dispatch in a middle of dispatch” error in Flux, but doesn't cause the problems associated with it. In Flux, a dispatch is forbidden while Stores are handling the action and emitting updates. This is unfortunate because it makes it impossible to dispatch actions from component lifecycle hooks or other benign places.
->
-> In Redux, subscriptions are called after the root reducer has returned the new state, so you _may_ dispatch in the subscription listeners. You are only disallowed to dispatch inside the reducers because they must have no side effects. If you want to cause a side effect in response to an action, the right place to do this is in the potentially async [action creator](../understanding/thinking-in-redux/Glossary.md#action-creator).
+:::caution
+
+If you attempt to call `dispatch` from inside the [reducer](../understanding/thinking-in-redux/Glossary.md#reducer), it will throw with an error saying "Reducers may not dispatch actions." Reducers are pure functions - they can _only_ return a new state value and must not have side effects (and dispatching is a side effect).
+
+In Redux, subscriptions are called after the root reducer has returned the new state, so you _may_ dispatch in the subscription listeners. You are only disallowed to dispatch inside the reducers because they must have no side effects. If you want to cause a side effect in response to an action, the right place to do this is in the potentially async [action creator](../understanding/thinking-in-redux/Glossary.md#action-creator).
+
+:::
 
 #### Arguments
 
@@ -62,15 +61,15 @@ The store's reducing function will be called with the current [`getState()`](#ge
 
 However, if you wrap [`createStore`](createStore.md) with [`applyMiddleware`](applyMiddleware.md), the middleware can interpret actions differently, and provide support for dispatching [async actions](../understanding/thinking-in-redux/Glossary.md#async-action). Async actions are usually asynchronous primitives like Promises, Observables, or thunks.
 
-Middleware is created by the community and does not ship with Redux by default. You need to explicitly install packages like [redux-thunk](https://github.com/gaearon/redux-thunk) or [redux-promise](https://github.com/acdlite/redux-promise) to use it. You may also create your own middleware.
+Middleware does not ship with the Redux core package. The most common middleware, [redux-thunk](https://github.com/reduxjs/redux-thunk), is included and enabled by default when you create a store with Redux Toolkit's `configureStore`. If you are using the core `createStore` directly, you need to install and apply middleware yourself. You may also create your own middleware.
 
 To learn how to describe asynchronous API calls, read the current state inside action creators, perform side effects, or chain them to execute in a sequence, see the examples for [`applyMiddleware`](applyMiddleware.md).
 
 #### Example
 
 ```js
-import { createStore } from 'redux'
-const store = createStore(todos, ['Use Redux'])
+import { configureStore } from '@reduxjs/toolkit'
+const store = configureStore({ reducer: todos, preloadedState: ['Use Redux'] })
 
 function addTodo(text) {
   return {
@@ -85,9 +84,11 @@ store.dispatch(addTodo('Read about the middleware'))
 
 ---
 
+&nbsp;
+
 ### subscribe(listener)
 
-Adds a change listener. It will be called any time an action is dispatched, and some part of the state tree may potentially have changed. You may then call [`getState()`](#getState) to read the current state tree inside the callback.
+Adds a change listener. It will be called any time an action is dispatched, and some part of the state tree may potentially have changed. You may then call [`getState()`](#getstate) to read the current state tree inside the callback.
 
 You may call [`dispatch()`](#dispatchaction) from a change listener, with the following caveats:
 
@@ -103,7 +104,7 @@ To unsubscribe the change listener, invoke the function returned by `subscribe`.
 
 #### Arguments
 
-1. `listener` (_Function_): The callback to be invoked any time an action has been dispatched, and the state tree might have changed. You may call [`getState()`](#getState) inside this callback to read the current state tree. It is reasonable to expect that the store's reducer is a pure function, so you may compare references to some deep path in the state tree to learn whether its value has changed.
+1. `listener` (_Function_): The callback to be invoked any time an action has been dispatched, and the state tree might have changed. You may call [`getState()`](#getstate) inside this callback to read the current state tree. It is reasonable to expect that the store's reducer is a pure function, so you may compare references to some deep path in the state tree to learn whether its value has changed.
 
 ##### Returns
 
@@ -136,6 +137,8 @@ unsubscribe()
 ```
 
 ---
+
+&nbsp;
 
 ### replaceReducer(nextReducer)
 

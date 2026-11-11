@@ -1,30 +1,10 @@
 ---
 id: performance
 title: Performance
-hide_title: true
+sidebar_label: Performance
 ---
 
-# Redux FAQ: Performance
-
-## Table of Contents
-
-- [Redux FAQ: Performance](#redux-faq-performance)
-  - [Table of Contents](#table-of-contents)
-  - [Performance](#performance)
-    - [How well does Redux “scale” in terms of performance and architecture?](#how-well-does-redux-scale-in-terms-of-performance-and-architecture)
-      - [Further information](#further-information)
-    - [Won't calling “all my reducers” for each action be slow?](#wont-calling-all-my-reducers-for-each-action-be-slow)
-      - [Further information](#further-information-1)
-    - [Do I have to deep-clone my state in a reducer? Isn't copying my state going to be slow?](#do-i-have-to-deep-clone-my-state-in-a-reducer-isnt-copying-my-state-going-to-be-slow)
-      - [Further information](#further-information-2)
-    - [How can I reduce the number of store update events?](#how-can-i-reduce-the-number-of-store-update-events)
-      - [Further information](#further-information-3)
-    - [Will having “one state tree” cause memory problems? Will dispatching many actions take up memory?](#will-having-one-state-tree-cause-memory-problems-will-dispatching-many-actions-take-up-memory)
-      - [Further information](#further-information-4)
-    - [Will caching remote data cause memory problems?](#will-caching-remote-data-cause-memory-problems)
-      - [Further information](#further-information-5)
-
-## Performance
+## Redux FAQ: Performance
 
 ### How well does Redux “scale” in terms of performance and architecture?
 
@@ -42,7 +22,7 @@ As for architecture, anecdotal evidence is that Redux works well for varying pro
 
 **Documentation**
 
-- [Recipes: Structuring Reducers - Normalizing State Shape](../recipes/structuring-reducers/NormalizingStateShape.md)
+- [Using Redux: Structuring Reducers - Normalizing State Shape](../usage/structuring-reducers/NormalizingStateShape.md)
 
 **Articles**
 
@@ -93,9 +73,9 @@ If you actually are concerned about reducer performance, you can use a utility s
 
 Immutably updating state generally means making shallow copies, not deep copies. Shallow copies are much faster than deep copies, because fewer objects and fields have to be copied, and it effectively comes down to moving some pointers around.
 
-In addition, deep cloning state creates new references for every field. Since the React-Redux `connect` function relies on reference comparisons to determine if data has changed, this means that UI components will be forced to re-render unnecessarily even though the other data hasn't meaningfully changed.
+In addition, deep cloning state creates new references for every field. Since React-Redux's `useSelector` relies on reference comparisons to determine if data has changed, this means that UI components will be forced to re-render unnecessarily even though the other data hasn't meaningfully changed. See [Why is my component re-rendering too often?](./ReactRedux.md#why-is-my-component-re-rendering-too-often) for details.
 
-However, you _do_ need to create a copied and updated object for each level of nesting that is affected. Although that shouldn't be particularly expensive, it's another good reason why you should keep your state normalized and shallow if possible.
+However, you _do_ need to create a copied and updated object for each level of nesting that is affected. Although that shouldn't be particularly expensive, it's another good reason why you should keep your state normalized and shallow if possible. Reducers written with `createSlice` handle this for you: Immer copies only the objects along the path you changed and keeps every other reference the same.
 
 > Common Redux misconception: you need to deeply clone the state. Reality: if something inside doesn't change, keep its reference the same!
 
@@ -103,8 +83,8 @@ However, you _do_ need to create a copied and updated object for each level of n
 
 **Documentation**
 
-- [Recipes: Structuring Reducers - Prerequisite Concepts](../recipes/structuring-reducers/PrerequisiteConcepts.md)
-- [Recipes: Structuring Reducers - Immutable Update Patterns](../recipes/structuring-reducers/ImmutableUpdatePatterns.md)
+- [Using Redux: Structuring Reducers - Prerequisite Concepts](../usage/structuring-reducers/PrerequisiteConcepts.md)
+- [Using Redux: Structuring Reducers - Immutable Update Patterns](../usage/structuring-reducers/ImmutableUpdatePatterns.md)
 
 **Discussions**
 
@@ -112,7 +92,6 @@ However, you _do_ need to create a copied and updated object for each level of n
 - [#758: Why can't state be mutated?](https://github.com/reduxjs/redux/issues/758)
 - [#994: How to cut the boilerplate when updating nested entities?](https://github.com/reduxjs/redux/issues/994)
 - [Twitter: common misconception - deep cloning](https://twitter.com/dan_abramov/status/688087202312491008)
-- [Cloning Objects in JavaScript](https://www.zsoltnagy.eu/cloning-objects-in-javascript/)
 
 ### How can I reduce the number of store update events?
 
@@ -120,23 +99,7 @@ Redux notifies subscribers after each successfully dispatched action (i.e. an ac
 
 There are several addons that add batching capabilities in various ways, like: [redux-batched-actions](https://github.com/tshelburne/redux-batched-actions) (a higher-order reducer that lets you dispatch several actions as if it was one and “unpack” them in the reducer), [redux-batched-subscribe](https://github.com/tappleby/redux-batched-subscribe) (a store enhancer that lets you debounce subscriber calls for multiple dispatches), or [redux-batch](https://github.com/manaflair/redux-batch) (a store enhancer that handles dispatching an array of actions with a single subscriber notification).
 
-For React-Redux specifically, starting in [React-Redux v7](https://github.com/reduxjs/react-redux/releases/tag/v7.0.1) a new `batch` public API is available to help minimize the number of React re-renders when dispatching actions outside of React event handlers. It wraps React's `unstable_batchedUpdate()` API, allows any React updates in an event loop tick to be batched together into a single render pass. React already uses this internally for its own event handler callbacks. This API is actually part of the renderer packages like ReactDOM and React Native, not the React core itself.
-
-Since React-Redux needs to work in both ReactDOM and React Native environments, we've taken care of importing this API from the correct renderer at build time for our own use. We also now re-export this function publicly ourselves, renamed to `batch()`. You can use it to ensure that multiple actions dispatched outside of React only result in a single render update, like this:
-
-```js
-import { batch } from 'react-redux'
-
-function myThunk() {
-  return (dispatch, getState) => {
-    // should only result in one combined re-render, not two
-    batch(() => {
-      dispatch(increment())
-      dispatch(increment())
-    })
-  }
-}
-```
+For React specifically, React 18 and later automatically batch all state updates that happen in the same event loop tick into a single render pass, including updates triggered by Redux dispatches outside of React event handlers (in thunks, timeouts, or promise callbacks). Dispatching several actions in a row will still notify subscribers and run selectors once per action, but React will only render once. React-Redux still exports a `batch()` function from earlier versions, but it is a no-op in React-Redux v9 and will be removed in v10.
 
 #### Further information
 
@@ -148,10 +111,6 @@ function myThunk() {
 - [#1813: Use a loop to support dispatching arrays](https://github.com/reduxjs/redux/pull/1813)
 - [React Redux #263: Huge performance issue when dispatching hundreds of actions](https://github.com/reduxjs/react-redux/issues/263)
 - [React-Redux #1177: Roadmap: v6, Context, Subscriptions, and Hooks](https://github.com/reduxjs/react-redux/issues/1177)
-
-**Libraries**
-
-- [Redux Addons Catalog: Store - Change Subscriptions](https://github.com/markerikson/redux-ecosystem-links/blob/master/store.md#store-change-subscriptions)
 
 ### Will having “one state tree” cause memory problems? Will dispatching many actions take up memory?
 
@@ -183,7 +142,7 @@ First, only cache as much data as the user needs. If your application displays a
 
 Second, cache an abbreviated form of a record when possible. Sometimes a record includes data that is not relevant to the user. If the application does not depend on this data, it can be omitted from the cache.
 
-Third, only cache a single copy of a record. This is especially important when records contain copies of other records. Cache a unique copy for each record and replace each nested copy with a reference. This is called normalization. Normalization is the preferred approach to storing relational data for [several reasons](../recipes/structuring-reducers/NormalizingStateShape.md#designing-a-normalized-state), including efficient memory consumption.
+Third, only cache a single copy of a record. This is especially important when records contain copies of other records. Cache a unique copy for each record and replace each nested copy with a reference. This is called normalization. Normalization is the preferred approach to storing relational data for [several reasons](../usage/structuring-reducers/NormalizingStateShape.md#designing-a-normalized-state), including efficient memory consumption.
 
 #### Further information
 

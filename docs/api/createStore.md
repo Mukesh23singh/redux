@@ -2,16 +2,25 @@
 id: createstore
 title: createStore
 hide_title: true
+description: 'API > createStore: creating a core Redux store'
 ---
 
-# `createStore(reducer, [preloadedState], [enhancer])`
+&nbsp;
+
+# `createStore(reducer, preloadedState?, enhancer?)`
 
 Creates a Redux [store](Store.md) that holds the complete state tree of your app.
 There should only be a single store in your app.
 
-#### Arguments
+:::danger
 
-1. `reducer` _(Function)_: A [reducing function](../understanding/thinking-in-redux/Glossary.md#reducer) that returns the next [state tree](../understanding/thinking-in-redux/Glossary.md#state), given the current state tree and an [action](../understanding/thinking-in-redux/Glossary.md#action) to handle.
+**`createStore` is deprecated.** Use Redux Toolkit's [`configureStore`](/toolkit/api/configureStore) instead, which wraps `createStore` with a better default setup. `createStore` still works and will not be removed; see [Deprecation and `legacy_createStore`](#deprecation-and-alternate-legacy_createstore-export) below for details and [Migrating to Modern Redux](../usage/migrating-to-modern-redux.mdx) for how to update existing code.
+
+:::
+
+## Arguments
+
+1. `reducer` _(Function)_: A root [reducer function](../understanding/thinking-in-redux/Glossary.md#reducer) that returns the next [state tree](../understanding/thinking-in-redux/Glossary.md#state), given the current state tree and an [action](../understanding/thinking-in-redux/Glossary.md#action) to handle.
 
 2. [`preloadedState`] _(any)_: The initial state. You may optionally specify it to hydrate the state from the server in universal apps, or to restore a previously serialized user session. If you produced `reducer` with [`combineReducers`](combineReducers.md), this must be a plain object with the same shape as the keys passed to it. Otherwise, you are free to pass anything that your `reducer` can understand.
 
@@ -46,13 +55,27 @@ console.log(store.getState())
 // [ 'Use Redux', 'Read the docs' ]
 ```
 
-#### Tips
+## Deprecation and Alternate `legacy_createStore` Export
+
+In [Redux 4.2.0, we marked the original `createStore` method as `@deprecated`](https://github.com/reduxjs/redux/releases/tag/v4.2.0). Strictly speaking, **this is _not_ a breaking change**, nor is it new in 5.0, but we're documenting it here for completeness.
+
+**This deprecation is solely a _visual_ indicator that is meant to encourage users to [migrate their apps from legacy Redux patterns to use the modern Redux Toolkit APIs](https://redux.js.org/usage/migrating-to-modern-redux)**. The deprecation results in a visual strikethrough when imported and used, like ~~`createStore`~~, but with _no_ runtime errors or warnings.
+
+**`createStore` will continue to work indefinitely, and will _not_ ever be removed**. But, today we want _all_ Redux users to be using Redux Toolkit for all of their Redux logic.
+
+To fix this, there are three options:
+
+- **[Follow our strong suggestion to switch over to Redux Toolkit and `configureStore`](../usage/migrating-to-modern-redux.mdx)**
+- Do nothing. It's just a visual strikethrough, and it doesn't affect how your code behaves. Ignore it.
+- Switch to using the `legacy_createStore` API that is now exported, which is the exact same function but with no `@deprecated` tag. The simplest option is to do an aliased import rename, like `import { legacy_createStore as createStore } from 'redux'`
+
+## Tips
 
 - Don't create more than one store in an application! Instead, use [`combineReducers`](combineReducers.md) to create a single root reducer out of many.
 
 - Redux state is normally plain JS objects and arrays.
 
-- If your state is a plain object, make sure you never mutate it! For example, instead of returning something like `Object.assign(state, newData)` from your reducers, return `Object.assign({}, state, newData)`. This way you don't override the previous `state`. You can also write `return { ...state, ...newData }` if you enable the [object spread operator proposal](../recipes/UsingObjectSpreadOperator.md).
+- If your state is a plain object, make sure you never mutate it! Immutable updates require making copies of each level of data, typically using the object spread operator ( `return { ...state, ...newData }` ).
 
 - For universal apps that run on the server, create a store instance with every request so that they are isolated. Dispatch a few data fetching actions to a store instance and wait for them to complete before rendering the app on the server.
 

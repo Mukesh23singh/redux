@@ -2,10 +2,14 @@
 id: middleware
 title: Middleware
 description: 'History and Design > Middleware: How middleware enable adding additional capabilities to the Redux store'
-hide_title: true
 ---
 
+<!-- prettier-ignore -->
+import CoreApiNote from "../../components/_CoreApiNote.mdx";
+
 # Middleware
+
+<CoreApiNote />
 
 You've seen middleware in action in the ["Redux Fundamentals" tutorial](../../tutorials/fundamentals/part-4-store.md#middleware). If you've used server-side libraries like [Express](https://expressjs.com/) and [Koa](https://koajs.com/), you were also probably already familiar with the concept of _middleware_. In these frameworks, middleware is some code you can put between the framework receiving a request, and the framework generating a response. For example, Express or Koa middleware may add CORS headers, logging, compression, and more. The best feature of middleware is that it's composable in a chain. You can use multiple independent third-party middleware in a single project.
 
@@ -95,7 +99,7 @@ What if we want to apply **more than one** such transformation to `dispatch`?
 
 A different useful transformation that comes to my mind is reporting JavaScript errors in production. The global `window.onerror` event is not reliable because it doesn't provide stack information in some older browsers, which is crucial to understand why an error is happening.
 
-Wouldn't it be useful if, any time an error is thrown as a result of dispatching an action, we would send it to a crash reporting service like [Sentry](https://getsentry.com/welcome/) with the stack trace, the action that caused the error, and the current state? This way it's much easier to reproduce the error in development.
+Wouldn't it be useful if, any time an error is thrown as a result of dispatching an action, we would send it to a crash reporting service like [Sentry](https://sentry.io/) with the stack trace, the action that caused the error, and the current state? This way it's much easier to reproduce the error in development.
 
 However, it is important that we keep logging and crash reporting separate. Ideally we want them to be different modules, potentially in different packages. Otherwise we can't have an ecosystem of such utilities. (Hint: we're slowly getting to what middleware is!)
 
@@ -119,7 +123,7 @@ function patchStoreToAddCrashReporting(store) {
       return next(action)
     } catch (err) {
       console.error('Caught an exception!', err)
-      Raven.captureException(err, {
+      Sentry.captureException(err, {
         extra: {
           action,
           state: store.getState()
@@ -218,7 +222,7 @@ function logger(store) {
 }
 ```
 
-It's a [“we need to go deeper”](https://knowyourmeme.com/memes/we-need-to-go-deeper) kind of moment, so it might take a while for this to make sense. The function cascade feels intimidating. ES6 arrow functions make this [currying](https://en.wikipedia.org/wiki/Currying) easier on eyes:
+It's a [“we need to go deeper”](https://knowyourmeme.com/memes/we-need-to-go-deeper) kind of moment, so it might take a while for this to make sense. The function cascade feels intimidating. Arrow functions make this [currying](https://en.wikipedia.org/wiki/Currying) easier on eyes:
 
 ```js
 const logger = store => next => action => {
@@ -233,7 +237,7 @@ const crashReporter = store => next => action => {
     return next(action)
   } catch (err) {
     console.error('Caught an exception!', err)
-    Raven.captureException(err, {
+    Sentry.captureException(err, {
       extra: {
         action,
         state: store.getState()
@@ -266,7 +270,7 @@ function applyMiddleware(store, middlewares) {
 
 The implementation of [`applyMiddleware()`](../../api/applyMiddleware.md) that ships with Redux is similar, but **different in three important aspects**:
 
-- It only exposes a subset of the [store API](../../api/Store.md) to the middleware: [`dispatch(action)`](../../api/Store.md#dispatchaction) and [`getState()`](../../api/Store.md#getState).
+- It only exposes a subset of the [store API](../../api/Store.md) to the middleware: [`dispatch(action)`](../../api/Store.md#dispatchaction) and [`getState()`](../../api/Store.md#getstate).
 
 - It does a bit of trickery to make sure that if you call `store.dispatch(action)` from your middleware instead of `next(action)`, the action will actually travel the whole middleware chain again, including the current middleware. [This is useful for asynchronous middleware](../../tutorials/fundamentals/part-6-async-logic.md). There is one caveat when calling `dispatch` during setup, described below.
 
@@ -295,7 +299,7 @@ const crashReporter = store => next => action => {
     return next(action)
   } catch (err) {
     console.error('Caught an exception!', err)
-    Raven.captureException(err, {
+    Sentry.captureException(err, {
       extra: {
         action,
         state: store.getState()
@@ -326,6 +330,18 @@ That's it! Now any actions dispatched to the store instance will flow through `l
 store.dispatch(addTodo('Use Redux'))
 ```
 
+With Redux Toolkit, the same middleware are added through the `middleware` option of `configureStore`, which calls `applyMiddleware` for you:
+
+```js
+import { configureStore } from '@reduxjs/toolkit'
+
+const store = configureStore({
+  reducer: reducers,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(logger, crashReporter)
+})
+```
+
 ## Seven Examples
 
 If your head boiled from reading the above section, imagine what it was like to write it. This section is meant to be a relaxation for you and me, and will help get your gears turning.
@@ -353,7 +369,7 @@ const crashReporter = store => next => action => {
     return next(action)
   } catch (err) {
     console.error('Caught an exception!', err)
-    Raven.captureException(err, {
+    Sentry.captureException(err, {
       extra: {
         action,
         state: store.getState()

@@ -27,6 +27,7 @@
   --ifm-tabs-padding-horizontal: 0.4rem;
   --ifm-pre-background: rgb(39, 40, 34);
 
+  --ifm-color-content: black;
   --ifm-alert-color: black;
 
   --ra-admonition-color: #ecf4f9;
@@ -65,8 +66,8 @@
   --ifm-color-primary-light: #b97cfd;
   --ifm-color-primary-lighter: #cc8ffc;
   --ifm-color-primary-lightest: #fcf2ff;
-
-  --ifm-blockquote-color: #ecf4f9;
+  --ifm-color-content: #c4c9ce;
+  --ifm-blockquote-color: #c4c9ce;
   --ifm-blockquote-color-dark: #6d1cac;
   --blockquote-text-color: black;
 }
@@ -81,6 +82,16 @@ blockquote {
   background-color: var(--ifm-blockquote-color);
   border-left: 6px solid var(--ifm-blockquote-color-dark);
   border-radius: var(--ifm-global-radius);
+}
+
+.admonition a,
+blockquote a {
+  color: var(--ifm-color-primary-darkest);
+  text-decoration: none;
+}
+.admonition a:hover,
+blockquote a:hover {
+  color: var(--blockquote-text-color);
 }
 
 .docusaurus-highlight-code-line {
@@ -98,9 +109,18 @@ div[class*='codeBlockTitle'] {
   padding: 0.15rem var(--ifm-pre-padding);
 }
 
+:root[data-theme='dark'] .admonition code {
+  color: var(--ifm-blockquote-color);
+}
+
+:root[data-theme='dark'] blockquote code {
+  color: var(--ifm-blockquote-color);
+}
+
 code {
   background-color: var(--ifm-color-emphasis-300);
   border-radius: 0.2rem;
+  color: var(--ifm-color-content);
 }
 
 a code,
@@ -117,7 +137,11 @@ a.contents__link.contents__link--active {
   font-weight: 600;
 }
 
-a:visited {
+a:visited:not(
+    .menu__link,
+    .table-of-contents__link,
+    .navbar__link:not([target='_blank'])
+  ) {
   color: var(--ifm-color-primary);
 }
 
@@ -127,6 +151,30 @@ a:visited {
 
 .navbar .navbar__items {
   flex: 1 1 auto;
+}
+
+.navbar .navbar__item {
+  white-space: nowrap;
+}
+
+/* The Redux links need about 1400px at full size. Between that and the mobile
+   breakpoint, drop the logo text and "Library:" label and tighten the links. */
+@media screen and (min-width: 997px) and (max-width: 1399px) {
+  .navbar {
+    --ifm-navbar-item-padding-horizontal: 0.5rem;
+  }
+
+  .navbar__title,
+  .navbar__library-prefix {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 997px) and (max-width: 1149px) {
+  .navbar {
+    --ifm-navbar-item-padding-horizontal: 0.3rem;
+    font-size: 0.875rem;
+  }
 }
 
 .footer__logo {
@@ -147,12 +195,16 @@ a:visited {
   transform: rotateZ(180deg);
   -webkit-transition: -webkit-transform 0.2s linear;
   transition: -webkit-transform 0.2s linear;
-  transition-property: transform, -webkit-transform;
+  transition-property:
+    transform,
+    -webkit-transform;
   transition-duration: 0.2s, 0.2s;
   transition-timing-function: linear, linear;
   transition-delay: 0s, 0s;
   transition: transform 0.2s linear;
-  transition: transform 0.2s linear, -webkit-transform 0.2s linear;
+  transition:
+    transform 0.2s linear,
+    -webkit-transform 0.2s linear;
 }
 
 .menu .menu__list-item.menu__list-item--collapsed .menu__link--sublist:after {
@@ -204,18 +256,21 @@ details.detailed-explanation p {
 }
 
 .style-guide .priority-essential h3:after {
-  content: ' ESSENTIAL';
+  content: 'ESSENTIAL';
   color: var(--ifm-color-danger);
+  position: relative;
 }
 
 .style-guide .priority-stronglyrecommended h3:after {
-  content: ' STRONGLY RECOMMENDED';
+  content: 'STRONGLY RECOMMENDED';
   color: var(--ifm-color-warning);
+  position: relative;
 }
 
 .style-guide .priority-recommended h3:after {
-  content: ' RECOMMENDED';
+  content: 'RECOMMENDED';
   color: var(--ifm-color-info);
+  position: relative;
 }
 
 .admonition {
@@ -252,4 +307,49 @@ details.detailed-explanation p {
 .admonition .admonition-icon svg {
   fill: black;
   stroke: black;
+}
+
+/* library switcher in the navbar */
+.navbar__library-prefix {
+  opacity: 0.7;
+  font-weight: normal;
+  margin-right: 0.3em;
+}
+
+.navbar__library-name {
+  font-weight: 600;
+}
+
+.navbar__library-mobile {
+  display: none;
+}
+
+@media screen and (max-width: 996px) {
+  .navbar__title {
+    display: none;
+  }
+
+  .navbar__library-mobile {
+    display: inline-block;
+    color: var(--ifm-navbar-link-color);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .navbar__library-mobile:hover {
+    text-decoration: none;
+    color: var(--ifm-navbar-link-hover-color);
+  }
+}
+
+.navbar-sidebar__library {
+  display: block;
+  padding: 0.5rem 1rem 0;
+  color: var(--ifm-font-base-color);
+}
+
+.navbar-sidebar__library:hover {
+  text-decoration: none;
 }

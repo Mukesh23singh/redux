@@ -1,4 +1,4 @@
-import { compose } from '..'
+import { compose } from '../src'
 
 describe('Utils', () => {
   describe('compose', () => {
@@ -27,17 +27,18 @@ describe('Utils', () => {
       const add = (x: number, y: number) => x + y
 
       expect(() =>
-        compose(square, add, (false as unknown) as sFunc)(1, 2)
+        compose(square, add, false as unknown as sFunc)(1, 2)
       ).toThrow()
+      // @ts-expect-error
       expect(() => compose(square, add, undefined)(1, 2)).toThrow()
       expect(() =>
-        compose(square, add, (true as unknown) as sFunc)(1, 2)
+        compose(square, add, true as unknown as sFunc)(1, 2)
       ).toThrow()
       expect(() =>
-        compose(square, add, (NaN as unknown) as sFunc)(1, 2)
+        compose(square, add, NaN as unknown as sFunc)(1, 2)
       ).toThrow()
       expect(() =>
-        compose(square, add, ('42' as unknown) as sFunc)(1, 2)
+        compose(square, add, '42' as unknown as sFunc)(1, 2)
       ).toThrow()
     })
 

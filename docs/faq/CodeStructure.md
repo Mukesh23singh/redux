@@ -1,20 +1,12 @@
 ---
 id: code-structure
 title: Code Structure
-hide_title: true
+sidebar_label: Code Structure
 ---
 
 import { DetailedExplanation } from '../components/DetailedExplanation'
 
-# Redux FAQ: Code Structure
-
-## Table of Contents
-
-- [What should my file structure look like? How should I group my action creators and reducers in my project? Where should my selectors go?](#what-should-my-file-structure-look-like-how-should-i-group-my-action-creators-and-reducers-in-my-project-where-should-my-selectors-go)
-- [How should I split my logic between reducers and action creators? Where should my “business logic” go?](#how-should-i-split-my-logic-between-reducers-and-action-creators-where-should-my-business-logic-go)
-- [Why should I use action creators?](#why-should-i-use-action-creators)
-- [Where should websockets and other persistent connections live?](#where-should-websockets-and-other-persistent-connections-live)
-- [How can I use the Redux store in non-component files?](#how-can-i-use-the-redux-store-in-non-component-files)
+## Redux FAQ: Code Structure
 
 ## What should my file structure look like? How should I group my action creators and reducers in my project? Where should my selectors go?
 
@@ -24,7 +16,7 @@ Since Redux is just a data store library, it has no direct opinion on how your p
 - "Feature folders" / "Domain"-style : separate folders per feature or domain, possibly with sub-folders per file type
 - “Ducks/Slices”: similar to domain style, but explicitly tying together actions and reducers, often by defining them in the same file
 
-It's generally suggested that selectors are defined alongside reducers and exported, and then reused elsewhere (such as in `mapStateToProps` functions, in async action creators, or sagas) to colocate all the code that knows about the actual shape of the state tree in the reducer files.
+It's generally suggested that selectors are defined alongside reducers and exported, and then reused elsewhere (such as in `useSelector` calls, in thunks, or in listener middleware) to colocate all the code that knows about the actual shape of the state tree in the reducer files.
 
 :::tip
 
@@ -63,17 +55,15 @@ While it ultimately doesn't matter how you lay out your code on disk, it's impor
 
 **Documentation**
 
-- [Style Guide: Structure Files as Feature Folders with Single-File Logic](../style-guide/style-guide.md##structure-files-as-feature-folders-with-single-file-logic)
+- [Style Guide: Structure Files as Feature Folders with Single-File Logic](../style-guide/style-guide.md#structure-files-as-feature-folders-with-single-file-logic)
 - [Redux Essentials tutorial: App Structure](../tutorials/essentials/part-2-app-structure.md)
-- [FAQ: Actions - "1:1 mapping between reducers and actions?"](./Actions.md#actions-reducer-mappings)
+- [FAQ: Actions - "1:1 mapping between reducers and actions?"](./Actions.md#is-there-always-a-one-to-one-mapping-between-reducers-and-actions)
 
 **Articles**
 
 - [How to Scale React Applications](https://www.smashingmagazine.com/2016/09/how-to-scale-react-applications/) (accompanying talk: [Scaling React Applications](https://vimeo.com/168648012))
 - [Redux Best Practices](https://medium.com/lexical-labs-engineering/redux-best-practices-64d59775802e)
-- [Rules For Structuring (Redux) Applications ](http://jaysoo.ca/2016/02/28/organizing-redux-application/)
 - [A Better File Structure for React/Redux Applications](https://marmelab.com/blog/2015/12/17/react-directory-structure.html)
-- [Organizing Large React Applications](http://engineering.kapost.com/2016/01/organizing-large-react-applications/)
 - [Four Strategies for Organizing Code](https://medium.com/@msandin/strategies-for-organizing-code-2c9d690b6f33)
 - [Encapsulating the Redux State Tree](https://randycoulman.com/blog/2016/09/13/encapsulating-the-redux-state-tree/)
 - [Redux Reducer/Selector Asymmetry](https://randycoulman.com/blog/2016/09/20/redux-reducer-selector-asymmetry/)
@@ -131,7 +121,7 @@ This comment sums up the dichotomy nicely:
 
 ## Why should I use action creators?
 
-Redux does not require action creators. You are free to create actions in any way that is best for you, including simply passing an object literal to `dispatch`. Action creators emerged from the [Flux architecture](https://facebook.github.io/react/blog/2014/07/30/flux-actions-and-the-dispatcher.html#actions-and-actioncreators) and have been adopted by the Redux community because they offer several benefits.
+Redux does not require action creators. You are free to create actions in any way that is best for you, including simply passing an object literal to `dispatch`. Action creators emerged from the [Flux architecture](https://legacy.reactjs.org/blog/2014/07/30/flux-actions-and-the-dispatcher.html#actions-and-actioncreators) and have been adopted by the Redux community because they offer several benefits.
 
 Action creators are more maintainable. Updates to an action can be made in one place and applied everywhere. All instances of an action are guaranteed to have the same shape and the same default values.
 
@@ -158,15 +148,11 @@ Middleware are the right place for persistent connections like websockets in a R
 - Middleware exist for the lifetime of the application
 - Like with the store itself, you probably only need a single instance of a given connection that the whole app can use
 - Middleware can see all dispatched actions and dispatch actions themselves. This means a middleware can take dispatched actions and turn those into messages sent over the websocket, and dispatch new actions when a message is received over the websocket.
-- A websocket connection instance isn't serializable, so [it doesn't belong in the store state itself](/faq/organizing-state#organizing-state-non-serializable)
+- A websocket connection instance isn't serializable, so [it doesn't belong in the store state itself](./OrganizingState.md#can-i-put-functions-promises-or-other-non-serializable-items-in-my-store-state)
 
 See [this example that shows how a socket middleware might dispatch and respond to Redux actions](https://gist.github.com/markerikson/3df1cf5abbac57820a20059287b4be58).
 
-There's many existing middleware for websockets and other similar connections - see the link below.
-
-**Libraries**
-
-- [Middleware: Socket and Adapters](https://github.com/markerikson/redux-ecosystem-links/blob/master/middleware-sockets-adapters.md)
+There are many existing middleware for websockets and other similar connections.
 
 ## How can I use the Redux store in non-component files?
 
@@ -179,7 +165,7 @@ However, there may be times when other parts of the codebase need to interact wi
 Some possible solutions are:
 
 - Write your store-dependent logic as a thunk, and then dispatch that thunk from a component
-- Pass along references to `dispatch` from components as arguments the relevant functions
+- Pass along references to `dispatch` from components as arguments to the relevant functions
 - Write the logic as middleware and add them to the store at setup time
 - Inject the store instance into the relevant files as the app is being created.
 
@@ -190,24 +176,22 @@ You can expose an `injectStore` function from the interceptor file instead:
 ```js title="common/api.js"
 let store
 
-export const injectStore(_store) {
+export const injectStore = _store => {
   store = _store
 }
 
-axiosInstance.interceptors.request.use(
-  config => {
-    config.headers.authorization = store.getState().auth.token
-    return config;
-  }
-)
+axiosInstance.interceptors.request.use(config => {
+  config.headers.authorization = store.getState().auth.token
+  return config
+})
 ```
 
 Then, in your entry point file, inject the store into the API setup file:
 
 ```js title="index.js"
-import store from "./app/store".
-import {injectStore} from "./common/api";
-injectStore(store);
+import store from './app/store'
+import { injectStore } from './common/api'
+injectStore(store)
 ```
 
 This way, the application setup is the only code that has to import the store, and the file dependency graph avoids circular dependencies.

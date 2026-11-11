@@ -1,14 +1,14 @@
-import { Dispatch } from './types/store'
-import {
-  AnyAction,
+import type { Dispatch } from './types/store'
+import type {
   ActionCreator,
-  ActionCreatorsMapObject
+  ActionCreatorsMapObject,
+  Action
 } from './types/actions'
 import { kindOf } from './utils/kindOf'
 
-function bindActionCreator<A extends AnyAction = AnyAction>(
+function bindActionCreator<A extends Action>(
   actionCreator: ActionCreator<A>,
-  dispatch: Dispatch
+  dispatch: Dispatch<A>
 ) {
   return function (this: any, ...args: any[]) {
     return dispatch(actionCreator.apply(this, args))
@@ -25,7 +25,7 @@ function bindActionCreator<A extends AnyAction = AnyAction>(
  * and get a dispatch wrapped function in return.
  *
  * @param actionCreators An object whose values are action
- * creator functions. One handy way to obtain it is to use ES6 `import * as`
+ * creator functions. One handy way to obtain it is to use `import * as`
  * syntax. You may also pass a single function.
  *
  * @param dispatch The `dispatch` function available on your Redux

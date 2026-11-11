@@ -1,11 +1,10 @@
-import { AnyAction, Action } from './types/actions'
-import {
+import type { Action } from './types/actions'
+import type {
   ActionFromReducersMapObject,
+  PreloadedStateShapeFromReducersMapObject,
   Reducer,
-  ReducersMapObject,
   StateFromReducersMapObject
 } from './types/reducers'
-import { CombinedState } from './types/store'
 
 import ActionTypes from './utils/actionTypes'
 import isPlainObject from './utils/isPlainObject'
@@ -14,7 +13,7 @@ import { kindOf } from './utils/kindOf'
 
 function getUnexpectedStateShapeWarningMessage(
   inputState: object,
-  reducers: ReducersMapObject,
+  reducers: { [key: string]: Reducer<any, any, any> },
   action: Action,
   unexpectedKeyCache: { [key: string]: true }
 ) {
@@ -60,7 +59,9 @@ function getUnexpectedStateShapeWarningMessage(
   }
 }
 
-function assertReducerShape(reducers: ReducersMapObject) {
+function assertReducerShape(reducers: {
+  [key: string]: Reducer<any, any, any>
+}) {
   Object.keys(reducers).forEach(key => {
     const reducer = reducers[key]
     const initialState = reducer(undefined, { type: ActionTypes.INIT })
@@ -102,7 +103,7 @@ function assertReducerShape(reducers: ReducersMapObject) {
  *
  * @param reducers An object whose values correspond to different reducer
  *   functions that need to be combined into one. One handy way to obtain it
- *   is to use ES6 `import * as reducers` syntax. The reducers may never
+ *   is to use `import * as reducers` syntax. The reducers may never
  *   return undefined for any action. Instead, they should return their
  *   initial state if the state passed to them was undefined, and the current
  *   state for any unrecognized action.
@@ -110,21 +111,20 @@ function assertReducerShape(reducers: ReducersMapObject) {
  * @returns A reducer function that invokes every reducer inside the passed
  *   object, and builds a state object with the same shape.
  */
-export default function combineReducers<S>(
-  reducers: ReducersMapObject<S, any>
-): Reducer<CombinedState<S>>
-export default function combineReducers<S, A extends Action = AnyAction>(
-  reducers: ReducersMapObject<S, A>
-): Reducer<CombinedState<S>, A>
-export default function combineReducers<M extends ReducersMapObject>(
+export default function combineReducers<M>(
   reducers: M
-): Reducer<
-  CombinedState<StateFromReducersMapObject<M>>,
-  ActionFromReducersMapObject<M>
->
-export default function combineReducers(reducers: ReducersMapObject) {
+): M[keyof M] extends Reducer<any, any, any> | undefined
+  ? Reducer<
+      StateFromReducersMapObject<M>,
+      ActionFromReducersMapObject<M>,
+      Partial<PreloadedStateShapeFromReducersMapObject<M>>
+    >
+  : never
+export default function combineReducers(reducers: {
+  [key: string]: Reducer<any, any, any>
+}) {
   const reducerKeys = Object.keys(reducers)
-  const finalReducers: ReducersMapObject = {}
+  const finalReducers: { [key: string]: Reducer<any, any, any> } = {}
   for (let i = 0; i < reducerKeys.length; i++) {
     const key = reducerKeys[i]
 
@@ -147,7 +147,7 @@ export default function combineReducers(reducers: ReducersMapObject) {
     unexpectedKeyCache = {}
   }
 
-  let shapeAssertionError: Error
+  let shapeAssertionError: unknown
   try {
     assertReducerShape(finalReducers)
   } catch (e) {
@@ -156,7 +156,7 @@ export default function combineReducers(reducers: ReducersMapObject) {
 
   return function combination(
     state: StateFromReducersMapObject<typeof reducers> = {},
-    action: AnyAction
+    action: Action
   ) {
     if (shapeAssertionError) {
       throw shapeAssertionError

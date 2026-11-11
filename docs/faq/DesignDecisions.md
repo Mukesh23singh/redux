@@ -1,25 +1,14 @@
 ---
 id: design-decisions
 title: Design Decisions
-hide_title: true
+sidebar_label: Design Decisions
 ---
 
-# Redux FAQ: Design Decisions
-
-## Table of Contents
-
-- [Why doesn't Redux pass the state and action to subscribers?](#why-doesnt-redux-pass-the-state-and-action-to-subscribers)
-- [Why doesn't Redux support using classes for actions and reducers?](#why-doesnt-redux-support-using-classes-for-actions-and-reducers)
-- [Why does the middleware signature use currying?](#why-does-the-middleware-signature-use-currying)
-- [Why does applyMiddleware use a closure for dispatch?](#why-does-applymiddleware-use-a-closure-for-dispatch)
-- [Why doesn't `combineReducers` include a third argument with the entire state when it calls each reducer?](#why-doesnt-combinereducers-include-a-third-argument-with-the-entire-state-when-it-calls-each-reducer)
-- [Why doesn't mapDispatchToProps allow use of return values from `getState()` or `mapStateToProps()`?](#why-doesnt-mapdispatchtoprops-allow-use-of-return-values-from-getstate-or-mapstatetoprops)
-
-## Design Decisions
+## Redux FAQ: Design Decisions
 
 ### Why doesn't Redux pass the state and action to subscribers?
 
-Subscribers are intended to respond to the state value itself, not the action. Updates to the state are processed synchronously, but notifications to subscribers can be batched or debounced, meaning that subscribers are not always notified with every action. This is a common [performance optimization](./Performance.md#performance-update-events) to avoid repeated re-rendering.
+Subscribers are intended to respond to the state value itself, not the action. Updates to the state are processed synchronously, but notifications to subscribers can be batched or debounced, meaning that subscribers are not always notified with every action. This is a common [performance optimization](./Performance.md#how-can-i-reduce-the-number-of-store-update-events) to avoid repeated re-rendering.
 
 Batching or debouncing is possible by using enhancers to override `store.dispatch` to change the way that subscribers are notified. Also, there are libraries that change Redux to process actions in batches to optimize performance and avoid repeated re-rendering:
 
@@ -30,16 +19,16 @@ The intended guarantee is that Redux eventually calls all subscribers with the m
 
 A potential use-case for using the action inside a subscriber -- which is an unsupported feature -- is to ensure that a component only re-renders after certain kinds of actions. Instead, re-rendering should be controlled through:
 
-1. the [shouldComponentUpdate](https://facebook.github.io/react/docs/react-component.html#shouldcomponentupdate) lifecycle method
-2. the [virtual DOM equality check (vDOMEq)](https://facebook.github.io/react/docs/optimizing-performance.html#avoid-reconciliation)
-3. [React.PureComponent](https://facebook.github.io/react/docs/optimizing-performance.html#examples)
-4. Using React-Redux: use [mapStateToProps](https://react-redux.js.org/api#connect) to subscribe components to only the parts of the store that they need.
+1. Using React-Redux: have each `useSelector` call return only the smallest piece of state the component needs, so the component re-renders only when that value changes.
+2. Wrapping the component in [`React.memo`](https://react.dev/reference/react/memo) so that a parent re-render does not force it to re-render as well.
+
+See [Why is my component re-rendering too often?](./ReactRedux.md#why-is-my-component-re-rendering-too-often) for details.
 
 #### Further Information
 
 **Articles**
 
-- [How can I reduce the number of store update events?](./Performance.md#performance-update-events)
+- [How can I reduce the number of store update events?](./Performance.md#how-can-i-reduce-the-number-of-store-update-events)
 
 **Discussions**
 
@@ -50,7 +39,7 @@ A potential use-case for using the action inside a subscriber -- which is an uns
 
 The pattern of using functions, called action creators, to return action objects may seem counterintuitive to programmers with a lot of Object Oriented Programming experience, who would see this is a strong use-case for Classes and instances. Class instances for action objects and reducers are not supported because class instances make serialization and deserialization tricky. Deserialization methods like `JSON.parse(string)` will return a plain old Javascript object rather than class instances.
 
-As described in the [Store FAQ](./OrganizingState.md#organizing-state-non-serializable), if you are okay with things like persistence and time-travel debugging not working as intended, you are welcome to put non-serializable items into your Redux store.
+As described in the [Store FAQ](./OrganizingState.md#can-i-put-functions-promises-or-other-non-serializable-items-in-my-store-state), if you are okay with things like persistence and time-travel debugging not working as intended, you are welcome to put non-serializable items into your Redux store.
 
 Serialization enables the browser to store all actions that have been dispatched, as well as the previous store states, with much less memory. Rewinding and 'hot reloading' the store is central to the Redux developer experience and the function of Redux DevTools. This also enables deserialized actions to be stored on the server and re-serialized in the browser in the case of server-side rendering with Redux.
 
@@ -58,7 +47,7 @@ Serialization enables the browser to store all actions that have been dispatched
 
 **Articles**
 
-- [Can I put functions, promises, or other non-serializable items in my store state?](./OrganizingState.md#organizing-state-non-serializable)
+- [Can I put functions, promises, or other non-serializable items in my store state?](./OrganizingState.md#can-i-put-functions-promises-or-other-non-serializable-items-in-my-store-state)
 
 **Discussions**
 
@@ -93,9 +82,9 @@ The [curried function signature](https://github.com/reactjs/redux/issues/1744) o
 
 ### Why doesn't `combineReducers` include a third argument with the entire state when it calls each reducer?
 
-`combineReducers` is opinionated to encourage splitting reducer logic by domain. As stated in [Beyond `combineReducers`](../recipes/structuring-reducers/BeyondCombineReducers.md),`combineReducers` is deliberately limited to handle a single common use case: updating a state tree that is a plain Javascript object by delegating the work of updating each slice of state to a specific slice reducer.
+`combineReducers` is opinionated to encourage splitting reducer logic by domain. As stated in [Beyond `combineReducers`](../usage/structuring-reducers/BeyondCombineReducers.md),`combineReducers` is deliberately limited to handle a single common use case: updating a state tree that is a plain Javascript object by delegating the work of updating each slice of state to a specific slice reducer.
 
-It's not immediately obvious what a potential third argument to each reducer should be: the entire state tree, some callback function, some other part of the state tree, etc. If `combineReducers` doesn't fit your use case, consider using libraries like [combineSectionReducers](https://github.com/ryo33/combine-section-reducers) or [reduceReducers](https://github.com/acdlite/reduce-reducers) for other options with deeply nested reducers and reducers that require access to the global state.
+It's not immediately obvious what a potential third argument to each reducer should be: the entire state tree, some callback function, some other part of the state tree, etc. If `combineReducers` doesn't fit your use case, consider using libraries like [combineSectionReducers](https://github.com/ryo33/combine-section-reducers) or [reduceReducers](https://github.com/redux-utilities/reduce-reducers) for other options with deeply nested reducers and reducers that require access to the global state.
 
 If none of the published utilities solve your use case, you can always write a function yourself that does just exactly what you need.
 
@@ -103,13 +92,15 @@ If none of the published utilities solve your use case, you can always write a f
 
 **Articles**
 
-- [Beyond `combineReducers`](../recipes/structuring-reducers/BeyondCombineReducers.md)
+- [Beyond `combineReducers`](../usage/structuring-reducers/BeyondCombineReducers.md)
 
 **Discussions**
 
 - [#1768 Allow reducers to consult global state](https://github.com/reactjs/redux/pull/1768)
 
 ### Why doesn't `mapDispatchToProps` allow use of return values from `getState()` or `mapStateToProps()`?
+
+This question applies to React-Redux's legacy `connect` API. With hooks, a component can call `useSelector` and `useDispatch` and combine the results however it wants, so there is no equivalent limitation.
 
 There have been requests to use either the entire `state` or the return value of `mapState` inside of `mapDispatch`, so that when functions are declared inside of `mapDispatch`, they can close over the latest returned values from the store.
 

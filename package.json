@@ -1,9 +1,9 @@
 {
   "name": "redux",
-  "version": "4.0.4",
-  "description": "Predictable state container for JavaScript apps",
+  "version": "5.0.1",
+  "description": "A JS library for predictable and maintainable global state management",
   "license": "MIT",
-  "homepage": "http://redux.js.org",
+  "homepage": "https://redux.js.org",
   "repository": "github:reduxjs/redux",
   "bugs": "https://github.com/reduxjs/redux/issues",
   "keywords": [
@@ -23,87 +23,55 @@
     "Dan Abramov <dan.abramov@me.com> (https://github.com/gaearon)",
     "Andrew Clark <acdlite@me.com> (https://github.com/acdlite)"
   ],
-  "main": "lib/redux.js",
-  "unpkg": "dist/redux.js",
-  "module": "es/redux.js",
-  "types": "types/index.d.ts",
+  "main": "dist/cjs/redux.cjs",
+  "module": "dist/redux.legacy-esm.js",
+  "types": "dist/redux.d.mts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/redux.d.mts",
+      "import": "./dist/redux.mjs",
+      "default": "./dist/cjs/redux.cjs"
+    }
+  },
   "files": [
     "dist",
-    "lib",
-    "es",
-    "src",
-    "types"
+    "src"
   ],
   "scripts": {
-    "clean": "rimraf lib dist es coverage types",
-    "format": "prettier --write \"{src,test}/**/*.{js,ts}\" \"**/*.md\"",
-    "format:check": "prettier --list-different \"{src,test}/**/*.{js,ts}\" \"**/*.md\"",
-    "lint": "eslint --ext js,ts src test",
-    "check-types": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "npm test -- --watch",
-    "test:cov": "npm test -- --coverage",
-    "build": "rollup -c",
-    "pretest": "npm run build",
-    "prepublishOnly": "npm run clean && npm run check-types && npm run format:check && npm run lint && npm test",
-    "examples:lint": "eslint --ext js,ts examples",
-    "examples:test": "cross-env CI=true babel-node examples/testAll.js"
-  },
-  "dependencies": {
-    "@babel/runtime": "^7.9.2"
+    "clean": "tsx scripts/clean.mts",
+    "format": "oxfmt \"{src,test}/**/*.{js,ts}\" \"docs/**/*.md\"",
+    "format:check": "oxfmt --check \"{src,test}/**/*.{js,ts}\" \"docs/**/*.md\"",
+    "lint": "oxlint src test",
+    "lint:fix": "oxlint --fix src test",
+    "test": "vitest --run --typecheck",
+    "type-tests": "tsc -p tsconfig.test.json --noEmit",
+    "test:watch": "vitest --watch",
+    "test:cov": "vitest --coverage",
+    "build": "pnpm clean && tsdown --config-loader unrun && tsx scripts/stripSourcemapFileField.mts",
+    "prepublishOnly": "pnpm clean && pnpm format:check && pnpm lint && pnpm test",
+    "prepack": "pnpm build",
+    "tsc": "tsc"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/node": "^7.8.7",
-    "@babel/plugin-external-helpers": "^7.8.3",
-    "@babel/plugin-proposal-object-rest-spread": "^7.9.5",
-    "@babel/plugin-transform-runtime": "^7.9.0",
-    "@babel/preset-env": "^7.9.5",
-    "@babel/preset-flow": "^7.9.0",
-    "@babel/preset-typescript": "^7.9.0",
-    "@babel/register": "^7.9.0",
-    "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-node-resolve": "^7.1.3",
-    "@rollup/plugin-replace": "^2.3.2",
-    "@types/jest": "^25.2.1",
-    "@types/node": "^13.13.4",
-    "@typescript-eslint/eslint-plugin": "^2.29.0",
-    "@typescript-eslint/parser": "^2.29.0",
-    "babel-eslint": "^10.1.0",
-    "babel-jest": "^25.4.0",
-    "cross-env": "^7.0.2",
-    "eslint": "^6.8.0",
-    "eslint-config-react-app": "^5.2.1",
-    "eslint-import-resolver-typescript": "^2.0.0",
-    "eslint-plugin-flowtype": "^4.7.0",
-    "eslint-plugin-import": "^2.20.2",
-    "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-react": "^7.19.0",
-    "eslint-plugin-react-hooks": "^3.0.0",
-    "glob": "^7.1.6",
-    "jest": "^25.4.0",
-    "prettier": "^2.0.5",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.7.2",
-    "rollup-plugin-terser": "^5.3.0",
-    "rollup-plugin-typescript2": "^0.27.0",
-    "rxjs": "^6.5.5",
-    "typescript": "^3.8.3",
-    "typings-tester": "^0.3.2"
+    "@arethetypeswrong/cli": "^0.18.3",
+    "@babel/core": "^7.24.3",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__helper-module-imports": "^7.18.3",
+    "@types/node": "^26.0.1",
+    "cross-env": "^7.0.3",
+    "glob": "^10.3.10",
+    "netlify-plugin-cache": "^1.0.3",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.81.0",
+    "pkg-pr-new": "^0.0.75",
+    "rxjs": "^7.8.1",
+    "tsdown": "^0.23.0",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3",
+    "unrun": "^0.3.1",
+    "vitest": "^4.0.5"
   },
-  "npmName": "redux",
-  "npmFileMap": [
-    {
-      "basePath": "/dist/",
-      "files": [
-        "*.js"
-      ]
-    }
-  ],
-  "jest": {
-    "testRegex": "(/test/.*\\.spec\\.[tj]s)$",
-    "coverageProvider": "v8"
-  },
-  "sideEffects": false
+  "sideEffects": false,
+  "packageManager": "pnpm@11.23.0"
 }

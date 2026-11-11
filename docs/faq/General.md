@@ -1,7 +1,7 @@
 ---
 id: general
 title: General
-hide_title: true
+sidebar_label: General
 ---
 
 # Redux FAQ: General
@@ -20,9 +20,9 @@ What to learn can be an overwhelming question for a JavaScript developer. It hel
 
 **Articles**
 
-- [Deciding What Not To Learn](https://gedd.ski/post/what-not-to-learn/)
+- [Deciding What Not To Learn](https://mastery.games/post/what-not-to-learn/)
 - [How to learn web frameworks](https://ux.shopify.com/how-to-learn-web-frameworks-9d447cb71e68)
-- [Redux vs MobX vs Flux vs... Do you even need that?](https://goshakkk.name/redux-vs-mobx-vs-flux-etoomanychoices/)
+- [Redux vs MobX vs Flux vs... Do you even need that?](https://goshacmd.com/redux-vs-mobx-vs-flux-etoomanychoices/)
 
 **Discussions**
 
@@ -30,7 +30,6 @@ What to learn can be an overwhelming question for a JavaScript developer. It hel
 - [Twitter: If you want to teach someone to use an abstraction...](https://twitter.com/acemarke/status/901329101088215044)
 - [Twitter: it was never intended to be learned before...](https://twitter.com/dan_abramov/status/739961787295117312)
 - [Twitter: Learning Redux before React?](https://twitter.com/dan_abramov/status/739962098030137344)
-- [Twitter: The first time I used React, people told me I needed Redux...](https://twitter.com/raquelxmoss/status/901576285020856320)
 - [Twitter: This was my experience with Redux...](https://twitter.com/garetmckinley/status/901500556568645634)
 - [Dev.to: When is it time to use Redux?](https://dev.to/dan_abramov/comment/1n2k)
 
@@ -48,7 +47,7 @@ Similarly, Dan Abramov, one of the creators of Redux, says:
 
 > I would like to amend this: don't use Redux until you have problems with vanilla React.
 
-**Redux is most useful when in cases when**:
+**Redux is most useful in cases when**:
 
 - You have large amounts of application state that are needed in many places in the app
 - The app state is updated frequently
@@ -105,7 +104,11 @@ Redux can be used as a data store for any UI layer. The most common usage is wit
 
 ## Do I need to have a particular build tool to use Redux?
 
-Redux is originally written in ES6 and transpiled for production into ES5 with Webpack and Babel. You should be able to use it regardless of your JavaScript build process. Redux also offers a UMD build that can be used directly without any build process at all. The [counter-vanilla](https://github.com/reduxjs/redux/tree/master/examples/counter-vanilla) example demonstrates basic ES5 usage with Redux included as a `<script>` tag. As the relevant pull request says:
+Redux is written using modern JS syntax (ES2020), but the code is fairly simple.
+
+If you need to target older browsers, please transpile it yourself.
+
+The [counter-vanilla](https://github.com/reduxjs/redux/tree/master/examples/counter-vanilla) example demonstrates basic ES5 usage with Redux included as a `<script>` tag. As the relevant pull request says:
 
 > The new Counter Vanilla example is aimed to dispel the myth that Redux requires Webpack, React, hot reloading, sagas, action creators, constants, Babel, npm, CSS modules, decorators, fluent Latin, an Egghead subscription, a PhD, or an Exceeds Expectations O.W.L. level.
 >

@@ -1,10 +1,11 @@
-import { bindActionCreators, createStore, ActionCreator } from '..'
+import { bindActionCreators, createStore } from '../src'
+import type { ActionCreator, Store } from '../src'
 import { todos } from './helpers/reducers'
 import * as actionCreators from './helpers/actionCreators'
 
 describe('bindActionCreators', () => {
-  let store
-  let actionCreatorFunctions
+  let store: Store
+  let actionCreatorFunctions: any
 
   beforeEach(() => {
     store = createStore(todos)
@@ -33,13 +34,13 @@ describe('bindActionCreators', () => {
   it('wraps action creators transparently', () => {
     const uniqueThis = {}
     const argArray = [1, 2, 3]
-    function actionCreator() {
+    function actionCreator(this: any) {
       return { type: 'UNKNOWN_ACTION', this: this, args: [...arguments] }
     }
     const boundActionCreator = bindActionCreators(actionCreator, store.dispatch)
 
-    const boundAction = boundActionCreator.apply(uniqueThis, argArray)
-    const action = actionCreator.apply(uniqueThis, argArray)
+    const boundAction = boundActionCreator.apply(uniqueThis, argArray as [])
+    const action = actionCreator.apply(uniqueThis, argArray as [])
     expect(boundAction).toEqual(action)
     expect(boundAction.this).toBe(uniqueThis)
     expect(action.this).toBe(uniqueThis)
@@ -49,14 +50,14 @@ describe('bindActionCreators', () => {
     // as this is testing against invalid values, we will cast to unknown and then back to ActionCreator<any>
     // in a typescript environment this test is unnecessary, but required in javascript
     const boundActionCreators = bindActionCreators(
-      ({
+      {
         ...actionCreators,
         foo: 42,
         bar: 'baz',
         wow: undefined,
         much: {},
         test: null
-      } as unknown) as ActionCreator<any>,
+      } as unknown as ActionCreator<any>,
       store.dispatch
     )
     expect(Object.keys(boundActionCreators)).toEqual(
@@ -75,6 +76,7 @@ describe('bindActionCreators', () => {
 
   it('throws for an undefined actionCreator', () => {
     expect(() => {
+      // @ts-expect-error
       bindActionCreators(undefined, store.dispatch)
     }).toThrow(
       `bindActionCreators expected an object or a function, but instead received: 'undefined'. ` +
@@ -84,6 +86,7 @@ describe('bindActionCreators', () => {
 
   it('throws for a null actionCreator', () => {
     expect(() => {
+      // @ts-expect-error
       bindActionCreators(null, store.dispatch)
     }).toThrow(
       `bindActionCreators expected an object or a function, but instead received: 'null'. ` +
@@ -94,7 +97,7 @@ describe('bindActionCreators', () => {
   it('throws for a primitive actionCreator', () => {
     expect(() => {
       bindActionCreators(
-        ('string' as unknown) as ActionCreator<any>,
+        'string' as unknown as ActionCreator<any>,
         store.dispatch
       )
     }).toThrow(
